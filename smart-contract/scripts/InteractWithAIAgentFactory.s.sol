@@ -15,17 +15,17 @@ contract InteractWithAIAgentFactory is Script {
         AIAgentFactory factory = AIAgentFactory(FACTORY_ADDRESS);
         console.log("Interacting with AIAgentFactory at:", FACTORY_ADDRESS);
 
-        // Create an AI agent with the provided parameters.
-        address tokenAddr = factory.createAIAgent(
-            "AI Bot",                    // name
-            25,                          // age
-            "Cyborg",                    // race
-            "Software Engineer",         // profession
-            "An AI that writes code",    // bio
-            "Hello, world!",             // firstMessage
-            "https://example.com/image.png"  // image
-        );
-        console.log("AI Agent Token deployed at:", tokenAddr);
+        // // Create an AI agent with the provided parameters.
+        // address tokenAddr = factory.createAIAgent(
+        //     "AI Bot",                    // name
+        //     25,                          // age
+        //     "Cyborg",                    // race
+        //     "Software Engineer",         // profession
+        //     "An AI that writes code",    // bio
+        //     "Hello, world!",             // firstMessage
+        //     "https://example.com/image.png"  // image
+        // );
+        // console.log("AI Agent Token deployed at:", tokenAddr);
 
         // Retrieve and log all AI agents.
         AIAgentFactory.AIAgent[] memory agents = factory.getAllAIAgents();
