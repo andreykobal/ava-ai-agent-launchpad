@@ -12,10 +12,11 @@ import { http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { Civitai, Scheduler } from 'civitai';
-import { FaPaperPlane } from 'react-icons/fa';
 import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { PinataSDK } from 'pinata-web3';
+import { FaPaperPlane, FaHome } from 'react-icons/fa';
+
 
 // ---------------------------------------------------------------------
 // Helper function: Upload image from a given URL to Pinata
@@ -639,6 +640,18 @@ Image Prompt: ${imagePrompt}`,
   }
 
   return (
+    <>
+      {/* Fixed Home Button always displayed at the top left */}
+      <div className="fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setStep(0)}
+          className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+        >
+          <FaHome className="text-xl" />
+          <span>Home</span>
+        </button>
+      </div>
+
     <div className="relative min-h-screen flex items-center justify-center">
       <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
       {step < 4 ? (
@@ -868,6 +881,7 @@ Image Prompt: ${imagePrompt}`,
         </div>
       )}
     </div>
+    </>
   );
 }
 
@@ -877,6 +891,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
           <div className="relative min-h-screen">
+
             <div className="fixed top-4 right-4 z-50">
               <ConnectButton />
             </div>
