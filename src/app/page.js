@@ -740,7 +740,7 @@ Image Prompt: ${imagePrompt}`,
         </div>
         <div className="relative min-h-screen flex flex-col items-center justify-center">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
-          <div className="w-full container bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
+          <div className="w-full container bg-zinc-900 mt-16 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
             <button
               onClick={() => setStep(1)}
               disabled={loading}
@@ -810,6 +810,7 @@ Image Prompt: ${imagePrompt}`,
           <div className="w-full max-w-[500px] bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
             {step === 1 && (
               <>
+                <h1 className="text-white text-4xl font-bold mb-6">Create AI Agent</h1>
                 <button
                   onClick={handleAIWriter}
                   disabled={loading}
@@ -817,18 +818,6 @@ Image Prompt: ${imagePrompt}`,
                 >
                   {loading ? 'Generating...' : 'AI Writer'}
                 </button>
-                <h1 className="text-white text-4xl font-bold mb-6">Create Fictional Character</h1>
-                <div className="mb-4">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={createWithAI}
-                      onChange={(e) => setCreateWithAI(e.target.checked)}
-                      className="form-checkbox"
-                    />
-                    <span className="ml-2 text-white">Create with AI</span>
-                  </label>
-                </div>
                 <form onSubmit={handleNext} className="w-full">
                   <div className="mb-4">
                     <label htmlFor="name" className="block text-white mb-1">Name</label>
@@ -852,10 +841,21 @@ Image Prompt: ${imagePrompt}`,
                       placeholder="Enter character description"
                     />
                   </div>
+                  <div className="mb-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={createWithAI}
+                        onChange={(e) => setCreateWithAI(e.target.checked)}
+                        className="form-checkbox"
+                      />
+                      <span className="ml-2 text-white">Create with AI</span>
+                    </label>
+                  </div>
                   <button
                     type="submit"
                     disabled={!name || !description}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                    className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
                   >
                     Next
                   </button>
@@ -864,14 +864,20 @@ Image Prompt: ${imagePrompt}`,
             )}
             {step === 2 && (
               <>
+                <h1 className="text-white text-4xl font-bold mb-2">Generate Image</h1>
+                {generatedImage && (
+                  <div className="mt-4">
+                    <h2 className="text-white text-xl mb-2">Generated Image:</h2>
+                    <img src={generatedImage} alt="Generated" className="w-full rounded" />
+                  </div>
+                )}
                 <button
                   onClick={handleAIImagePrompt}
                   disabled={loading}
-                  className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                  className="mb-4 mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
                 >
                   {loading ? 'Generating...' : 'AI Writer'}
                 </button>
-                <h1 className="text-white text-4xl font-bold mb-6">Generate Image Prompt</h1>
                 <form onSubmit={handleNextStep2} className="w-full">
                   <div className="mb-4">
                     <label htmlFor="imagePrompt" className="block text-white mb-1">Image Prompt</label>
@@ -885,26 +891,20 @@ Image Prompt: ${imagePrompt}`,
                     />
                   </div>
                   <button
+                    onClick={handleGenerateImage}
+                    disabled={loading}
+                    className="w-full mb-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+                  >
+                    {loading ? 'Generating Image...' : 'Generate Image'}
+                  </button>
+                  <button
                     type="submit"
                     disabled={!generatedImage}
-                    className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                    className="w-full mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
                   >
                     Next
                   </button>
                 </form>
-                <button
-                  onClick={handleGenerateImage}
-                  disabled={loading}
-                  className="mb-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
-                >
-                  {loading ? 'Generating Image...' : 'Generate Image'}
-                </button>
-                {generatedImage && (
-                  <div className="mt-4">
-                    <h2 className="text-white text-xl mb-2">Generated Image:</h2>
-                    <img src={generatedImage} alt="Generated" className="w-full rounded" />
-                  </div>
-                )}
               </>
             )}
             {step === 3 && (
@@ -994,7 +994,7 @@ Image Prompt: ${imagePrompt}`,
                   <button
                     type="submit"
                     disabled={!age || !race || !profession || !bio || !firstMessage}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                    className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
                   >
                     Create
                   </button>
@@ -1025,7 +1025,7 @@ Image Prompt: ${imagePrompt}`,
             <div className="flex-1 overflow-y-auto p-4" id="chat-container">
               {messages.filter((msg) => msg.role !== 'system').map((msg, idx) => (
                 <div key={idx} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                  <span className={`inline-block text-sm max-w-[80%] p-2 rounded-xl bg-opacity-80 backdrop-blur-xl ${msg.role === 'user' ? 'bg-purple-600 text-white' : 'bg-neutral-900 text-white'}`}>
+                  <span className={`inline-block max-w-[80%] p-2 rounded-xl bg-opacity-80 backdrop-blur-xl ${msg.role === 'user' ? 'bg-purple-600 text-white' : 'bg-neutral-900 text-white'}`}>
                     {msg.content}
                   </span>
                 </div>
