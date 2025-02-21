@@ -17,7 +17,8 @@ import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
 
 // --- Factory ABI and address ---
-// Ensure the ABI is cast as const for proper type inference.
+// ABI now includes getAllAIAgents for listing existing agents.
+// Cast as const for proper type inference.
 const factoryABI = [
   {
     "inputs": [
@@ -34,6 +35,29 @@ const factoryABI = [
       { "internalType": "address", "name": "", "type": "address" }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllAIAgents",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "uint256", "name": "age", "type": "uint256" },
+          { "internalType": "string", "name": "race", "type": "string" },
+          { "internalType": "string", "name": "profession", "type": "string" },
+          { "internalType": "string", "name": "bio", "type": "string" },
+          { "internalType": "string", "name": "firstMessage", "type": "string" },
+          { "internalType": "string", "name": "image", "type": "string" },
+          { "internalType": "address", "name": "tokenAddress", "type": "address" }
+        ],
+        "internalType": "struct AIAgentFactory.AIAgent[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -92,35 +116,45 @@ const config = getDefaultConfig({
 });
 const queryClient = new QueryClient();
 
+// Create an instance of Civitai.
+const civitai = new Civitai({
+  auth: process.env.NEXT_PUBLIC_CIVITAI_API_TOKEN,
+});
+
 function Home() {
-  const [step, setStep] = useState(1);
-  // Basic character details (from steps 1 & 2)
+  // Step 0: Home screen state
+  const [step, setStep] = useState(0);
+  // State for selecting an existing agent.
+  const [selectedTokenAddress, setSelectedTokenAddress] = useState('');
+
+  // States for new agent creation (steps 1-3)
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [imagePrompt, setImagePrompt] = useState('');
   const [generatedImage, setGeneratedImage] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  // Step 3 additional details
   const [age, setAge] = useState('');
   const [race, setRace] = useState('');
   const [profession, setProfession] = useState('');
   const [bio, setBio] = useState('');
   const [firstMessage, setFirstMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // State for the deployed token address from the transaction.
+  // New agent's token address (from new agent creation)
   const [tokenAddress, setTokenAddress] = useState('');
 
   // Chat state (step 4)
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
 
-  // Create a Civitai client instance.
-  const civitai = new Civitai({
-    auth: process.env.NEXT_PUBLIC_CIVITAI_API_TOKEN,
+  // --- Fetch existing AI agents ---
+  const { data: allAgents } = useReadContract({
+    abi: factoryABI,
+    address: FACTORY_ADDRESS,
+    functionName: 'getAllAIAgents',
+    enabled: true,
   });
 
-  // --- STEP 1: Generate character details ---
+  // --- Functions for launching a new agent (steps 1-3) ---
   const handleAIWriter = async () => {
     setLoading(true);
     console.debug('handleAIWriter: Start');
@@ -179,7 +213,6 @@ function Home() {
     }
   };
 
-  // --- STEP 2: Generate image prompt and image ---
   const handleAIImagePrompt = async () => {
     setLoading(true);
     console.debug('handleAIImagePrompt: Start');
@@ -236,6 +269,7 @@ function Home() {
     }
   };
 
+  // FIXED: Use the instance "civitai" (not Civitai) for image generation.
   const handleGenerateImage = async () => {
     setLoading(true);
     console.debug('handleGenerateImage: Start');
@@ -277,17 +311,20 @@ function Home() {
     }
   };
 
+  // Process flow for launching a new agent (steps 1-3):
+  // Step 1: Collect character details.
+  // Step 2: Generate image prompt and image.
+  // Step 3: Generate additional details and then write the contract.
   const handleNext = (e) => {
     e.preventDefault();
-    setStep(2);
+    setStep(2); // advance from step 1 to 2
   };
 
   const handleNextStep2 = (e) => {
     e.preventDefault();
-    setStep(3);
+    setStep(3); // advance from step 2 to 3
   };
 
-  // --- STEP 3: Generate additional character details ---
   const handleAIWriterStep3 = async () => {
     setLoading(true);
     console.debug('handleAIWriterStep3: Start');
@@ -355,9 +392,7 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
     }
   };
 
-  // --- STEP 3 Create: Write contract and wait for receipt ---
-  // We use useWriteContract to call createAIAgent.
-  // Note: createAgent returns the transaction hash (a string).
+  // Write contract and wait for receipt.
   const { writeContractAsync: createAgent } = useWriteContract();
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -408,14 +443,15 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
     }
   };
 
-  // --- STEP 4: Chat --- 
-  // Use useReadContract to fetch on-chain agent details.
+  // --- STEP 4: Chat ---
+  // Use getAIAgentByToken to fetch on-chain details.
   const { data: agentData } = useReadContract({
     abi: factoryABI,
     address: FACTORY_ADDRESS,
     functionName: 'getAIAgentByToken',
-    args: tokenAddress ? [tokenAddress] : undefined,
-    enabled: tokenAddress !== '',
+    // Use selectedTokenAddress (from existing agent) if set; otherwise use tokenAddress from a new agent.
+    args: selectedTokenAddress ? [selectedTokenAddress] : tokenAddress ? [tokenAddress] : undefined,
+    enabled: Boolean(selectedTokenAddress || tokenAddress),
   });
 
   useEffect(() => {
@@ -488,10 +524,60 @@ Image Prompt: ${imagePrompt}`,
     }
   };
 
+  // --- UI RENDERING ---
+  if (step === 0) {
+    // Home screen: Display "Launch AI Agent" button and grid of existing agents.
+    return (
+      <div className="relative min-h-screen flex flex-col items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
+        <div className="w-full max-w-[900px] bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
+          <button
+            onClick={() => setStep(1)}
+            disabled={loading}
+            className="mb-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            Launch AI Agent
+          </button>
+          <h1 className="text-white text-3xl font-bold mb-4">Existing AI Agents</h1>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {(allAgents || []).map((agent, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  setSelectedTokenAddress(agent.tokenAddress);
+                  setStep(4);
+                }}
+                className="bg-zinc-800 rounded p-4 cursor-pointer hover:shadow-lg transition-shadow"
+              >
+                <div className="flex">
+                  <img
+                    src={agent.image}
+                    alt={agent.name}
+                    className="w-20 h-20 rounded mr-4 object-cover"
+                  />
+                  <div>
+                    <h2 className="text-white text-xl font-bold">{agent.name}</h2>
+                    <p className="text-sm text-gray-300">
+                      {agent.profession} | {agent.race}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {agent.bio.length > 50 ? agent.bio.substring(0, 50) + '...' : agent.bio}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // For new agent creation (steps 1-3) and chat (step 4)
   return (
     <div className="relative min-h-screen flex items-center justify-center">
       <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
-      {step !== 4 && (
+      {step < 4 ? (
         <div className="w-full max-w-[500px] bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
           {step === 1 && (
             <>
@@ -615,9 +701,10 @@ Image Prompt: ${imagePrompt}`,
             </>
           )}
         </div>
-      )}
-      {step === 4 && (
-        <div style={{ backgroundImage: `url(${generatedImage})` }} className="w-full max-w-[500px] h-screen bg-cover bg-center mx-auto relative flex flex-col">
+      ) : (
+        // STEP 4: Chat view
+        // Background uses agentData.image if available; otherwise falls back to generatedImage.
+        <div style={{ backgroundImage: `url(${agentData?.image || generatedImage})` }} className="w-full max-w-[500px] h-screen bg-cover bg-center mx-auto relative flex flex-col">
           <header className="flex items-center p-4 bg-black bg-opacity-50">
             <img src={agentData?.image || generatedImage} alt="Avatar" className="w-10 h-10 rounded-full mr-4" />
             <div>
