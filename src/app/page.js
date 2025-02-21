@@ -15,8 +15,41 @@ import { Civitai, Scheduler } from 'civitai';
 import { FaPaperPlane } from 'react-icons/fa';
 import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
+import { PinataSDK } from 'pinata-web3';
 
-// --- Factory ABI and address ---
+// ---------------------------------------------------------------------
+// Helper function: Upload image from a given URL to Pinata
+// ---------------------------------------------------------------------
+async function uploadImageToPinata(imageUrl) {
+  try {
+    // Fetch the image blob from the Civitai URL
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+    // Create a File object from the blob (works in the browser)
+    const file = new File([blob], "generated-image.png", { type: blob.type });
+    // Initialize Pinata SDK with JWT and gateway from env variables
+    const pinata = new PinataSDK({
+      pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT,
+      pinataGateway: process.env.NEXT_PUBLIC_GATEWAY_URL,
+    });
+    // Upload the file to Pinata
+    const uploadResponse = await pinata.upload.file(file);
+    console.debug('uploadImageToPinata: Upload response', uploadResponse);
+    // Construct the final Pinata gateway URL using the returned IpfsHash
+    const pinataGatewayToken = process.env.NEXT_PUBLIC_PINATA_GATEWAY_TOKEN;
+
+    // ... after uploading the file to Pinata, update the URL construction:
+    const pinataUrl = `https://${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${uploadResponse.IpfsHash}?pinataGatewayToken=${pinataGatewayToken}`;
+    return pinataUrl;
+  } catch (error) {
+    console.error('Error uploading image to Pinata:', error);
+    throw error;
+  }
+}
+
+// ---------------------------------------------------------------------
+// Factory ABI and address (for interacting with your smart contract)
+// ---------------------------------------------------------------------
 const factoryABI = [
   {
     "inputs": [
@@ -102,7 +135,9 @@ const factoryABI = [
 ];
 const FACTORY_ADDRESS = '0x26af2afddf1903F8C8CDc0c1Cc8b7201a20a9209';
 
-// --- RainbowKit & Query Client configuration ---
+// ---------------------------------------------------------------------
+// RainbowKit & Query Client configuration
+// ---------------------------------------------------------------------
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
@@ -120,35 +155,29 @@ const civitai = new Civitai({
 });
 
 function Home() {
-  // Step 0: Home screen state
+  // -------------------------------------------------------------------
+  // State declarations for character creation and chat flow
+  // -------------------------------------------------------------------
   const [step, setStep] = useState(0);
-  // State for selecting an existing agent.
   const [selectedTokenAddress, setSelectedTokenAddress] = useState('');
-
-  // States for new agent creation (steps 1-3)
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [imagePrompt, setImagePrompt] = useState('');
   const [generatedImage, setGeneratedImage] = useState('');
-  // Age now is intended as a number (or empty if not set)
   const [age, setAge] = useState('');
   const [race, setRace] = useState('');
   const [profession, setProfession] = useState('');
   const [bio, setBio] = useState('');
   const [firstMessage, setFirstMessage] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // New agent's token address (from new agent creation)
   const [tokenAddress, setTokenAddress] = useState('');
-
-  // New state: whether to auto-create using AI
   const [createWithAI, setCreateWithAI] = useState(true);
-
-  // Chat state (step 4)
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
 
-  // --- Fetch existing AI agents ---
+  // -------------------------------------------------------------------
+  // Fetch existing AI agents from the contract
+  // -------------------------------------------------------------------
   const { data: allAgents } = useReadContract({
     abi: factoryABI,
     address: FACTORY_ADDRESS,
@@ -156,7 +185,9 @@ function Home() {
     enabled: true,
   });
 
-  // --- Functions for launching a new agent (steps 1-3) ---
+  // -------------------------------------------------------------------
+  // Step 1: Generate basic character details using OpenAI
+  // -------------------------------------------------------------------
   const handleAIWriter = async () => {
     setLoading(true);
     console.debug('handleAIWriter: Start');
@@ -215,6 +246,9 @@ function Home() {
     }
   };
 
+  // -------------------------------------------------------------------
+  // Step 2: Generate an image prompt via OpenAI
+  // -------------------------------------------------------------------
   const handleAIImagePrompt = async () => {
     setLoading(true);
     console.debug('handleAIImagePrompt: Start');
@@ -271,7 +305,9 @@ function Home() {
     }
   };
 
-  // Use the instance "civitai" (not Civitai) for image generation.
+  // -------------------------------------------------------------------
+  // Step 2 (continued): Generate image via Civitai and upload to Pinata
+  // -------------------------------------------------------------------
   const handleGenerateImage = async () => {
     setLoading(true);
     console.debug('handleGenerateImage: Start');
@@ -301,7 +337,10 @@ function Home() {
       );
       if (nestedJob) {
         console.debug('handleGenerateImage: Generated image URL', nestedJob.result.blobUrl);
-        setGeneratedImage(nestedJob.result.blobUrl);
+        // Upload the generated image to Pinata instead of using the Civitai URL directly.
+        const pinataUrl = await uploadImageToPinata(nestedJob.result.blobUrl);
+        console.debug('handleGenerateImage: Pinata URL', pinataUrl);
+        setGeneratedImage(pinataUrl);
       } else {
         console.error('Image generation failed.');
       }
@@ -313,6 +352,9 @@ function Home() {
     }
   };
 
+  // -------------------------------------------------------------------
+  // Step 3: Generate additional character details using OpenAI
+  // -------------------------------------------------------------------
   const handleAIWriterStep3 = async () => {
     setLoading(true);
     console.debug('handleAIWriterStep3: Start');
@@ -380,13 +422,12 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
     }
   };
 
-  // Auto-trigger AI functions when "Create with AI" is enabled.
+  // Auto-trigger AI functions based on step and state
   useEffect(() => {
     if (createWithAI && step === 2) {
       if (!imagePrompt) {
         handleAIImagePrompt();
       } else if (imagePrompt && !generatedImage) {
-        // Auto-generate image once prompt is available.
         handleGenerateImage();
       }
     }
@@ -398,18 +439,19 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
     }
   }, [step, createWithAI, age, race, profession, bio, firstMessage]);
 
-  // Process flow for launching a new agent (steps 1-3):
   const handleNext = (e) => {
     e.preventDefault();
-    setStep(2); // advance from step 1 to 2
+    setStep(2);
   };
 
   const handleNextStep2 = (e) => {
     e.preventDefault();
-    setStep(3); // advance from step 2 to 3
+    setStep(3);
   };
 
-  // Write contract and wait for receipt.
+  // -------------------------------------------------------------------
+  // Create the agent by writing to the contract and decoding logs
+  // -------------------------------------------------------------------
   const { writeContractAsync: createAgent } = useWriteContract();
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -460,7 +502,9 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
     }
   };
 
-  // --- STEP 4: Chat ---
+  // -------------------------------------------------------------------
+  // STEP 4: Chat – Fetch agent details and initialize the conversation
+  // -------------------------------------------------------------------
   const { data: agentData } = useReadContract({
     abi: factoryABI,
     address: FACTORY_ADDRESS,
@@ -539,7 +583,9 @@ Image Prompt: ${imagePrompt}`,
     }
   };
 
-  // --- UI RENDERING ---
+  // -------------------------------------------------------------------
+  // UI Rendering for different steps (character creation, agent list, chat)
+  // -------------------------------------------------------------------
   if (step === 0) {
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center">
