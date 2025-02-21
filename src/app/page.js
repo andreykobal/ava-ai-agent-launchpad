@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { Civitai, Scheduler } from 'civitai';
 import { FaPaperPlane, FaHome } from 'react-icons/fa';
+import { ImSpinner2 } from 'react-icons/im';
 import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { PinataSDK } from 'pinata-web3';
@@ -168,6 +169,7 @@ function Home() {
   const [createWithAI, setCreateWithAI] = useState(true);
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
+  const [downloading, setDownloading] = useState(false);
 
   // -------------------------------------------------------------------
   // Fetch existing AI agents from the contract with a dynamic scopeKey
@@ -413,6 +415,146 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
     } finally {
       setLoading(false);
       console.debug('handleAIWriterStep3: End');
+    }
+  };
+
+  // -------------------------------------------------------------------
+  // Download Character File: Generate a complete character file using token metadata.
+  // This function calls OpenAI with a detailed schema prompt that includes all available fields.
+  // It then removes markdown code fences (if any) before downloading the file.
+  // -------------------------------------------------------------------
+  const handleDownloadCharacterFile = async () => {
+    if (!agentData) {
+      console.error("No token metadata available to generate character file.");
+      return;
+    }
+    setDownloading(true);
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-2024-08-06',
+          messages: [
+            {
+              role: 'system',
+              content:
+                `You are an AI writer that generates complete character files for AI agents for managing automated twitter (X) accounts.
+A character file is a JSON-formatted configuration that defines an AI agent persona.
+Return a valid JSON object strictly following the schema provided. Do not include any extra text.`,
+            },
+            {
+              role: 'user',
+              content:
+                `Generate a detailed character file using the following token metadata:
+
+Name: "${agentData.name}"
+Age: ${agentData.age}
+Race: "${agentData.race}"
+Profession: "${agentData.profession}"
+Bio: "${agentData.bio}"
+First Message: "${agentData.firstMessage}"
+Image: "${agentData.image}"
+Token Address: "${agentData.tokenAddress}"
+
+Return a JSON object strictly following this schema:
+
+{
+  "name": "character_name",
+  "modelProvider": "openai",
+  "clients": ["discord", "direct"],
+  "plugins": [],
+  "settings": {
+    "ragKnowledge": false,
+    "secrets": {},
+    "voice": {},
+    "model": "",
+    "modelConfig": {
+      "temperature": 0.7,
+      "maxInputTokens": 4096,
+      "maxOutputTokens": 1024,
+      "frequency_penalty": 0.0,
+      "presence_penalty": 0.0
+    },
+    "imageSettings": {
+      "steps": 20,
+      "width": 1024,
+      "height": 1024,
+      "cfgScale": 7.5,
+      "negativePrompt": "string"
+    }
+  },
+  "bio": [],
+  "lore": [],
+  "username": "",
+  "system": "",
+  "knowledge": [],
+  "messageExamples": [],
+  "postExamples": [],
+  "topics": [],
+  "adjectives": [],
+  "style": {
+    "all": [],
+    "chat": [],
+    "post": []
+  }
+}
+
+Fill in all fields using the token metadata and add creative details where appropriate.`,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 800,
+        }),
+      });
+      const result = await response.json();
+      const message = result.choices[0].message;
+
+      // Helper: Remove markdown code fences if present by stripping first and last lines.
+      const parseJSONFromResponse = (content) => {
+        let raw = content.trim();
+        if (raw.startsWith("```")) {
+          const lines = raw.split("\n");
+          // Remove first line if it starts with ```
+          if (lines[0].startsWith("```")) {
+            lines.shift();
+          }
+          // Remove last line if it ends with ```
+          if (lines[lines.length - 1].startsWith("```")) {
+            lines.pop();
+          }
+          raw = lines.join("\n");
+        }
+        return JSON.parse(raw);
+      };
+
+      let characterFile;
+      try {
+        if (message.parsed) {
+          characterFile = message.parsed;
+        } else {
+          characterFile = parseJSONFromResponse(message.content);
+        }
+      } catch (e) {
+        console.error('Error parsing generated character file:', e);
+      }
+      // Custom replacer to handle BigInt serialization.
+      const jsonReplacer = (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value;
+      const dataStr =
+        'data:text/json;charset=utf-8,' +
+        encodeURIComponent(JSON.stringify(characterFile, jsonReplacer, 2));
+      const dlAnchorElem = document.createElement('a');
+      dlAnchorElem.setAttribute('href', dataStr);
+      dlAnchorElem.setAttribute('download', 'eliza_character_file.json');
+      dlAnchorElem.click();
+    } catch (error) {
+      console.error('Error generating character file:', error);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -862,14 +1004,23 @@ Image Prompt: ${imagePrompt}`,
           </div>
         ) : (
           <div style={{ backgroundImage: `url(${agentData?.image || generatedImage})` }} className="w-full max-w-[500px] h-screen bg-cover bg-center mx-auto relative flex flex-col">
-            <header className="flex items-center p-4 bg-black bg-opacity-50">
-              <img src={agentData?.image || generatedImage} alt="Avatar" className="w-10 h-10 rounded-full object-cover object-top mr-4" />
-              <div>
-                <h1 className="text-white text-xl font-bold">{agentData?.name || name}</h1>
-                {agentData?.tokenAddress && (
-                  <p className="text-xs text-yellow-500 font-bold">Token: {agentData.tokenAddress}</p>
-                )}
+            <header className="flex flex-col p-4 bg-black bg-opacity-50">
+              <div className="flex items-center w-full">
+                <img src={agentData?.image || generatedImage} alt="Avatar" className="w-10 h-10 rounded-full object-cover object-top mr-4" />
+                <div>
+                  <h1 className="text-white text-xl font-bold">{agentData?.name || name}</h1>
+                  {agentData?.tokenAddress && (
+                    <p className="text-xs text-yellow-500 font-bold">Token: {agentData.tokenAddress}</p>
+                  )}
+                </div>
               </div>
+              <button
+                onClick={handleDownloadCharacterFile}
+                disabled={downloading}
+                className="w-full mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center"
+              >
+                {downloading ? <ImSpinner2 className="animate-spin h-5 w-5 text-white" /> : 'Download Eliza Character File'}
+              </button>
             </header>
             <div className="flex-1 overflow-y-auto p-4" id="chat-container">
               {messages.filter((msg) => msg.role !== 'system').map((msg, idx) => (
