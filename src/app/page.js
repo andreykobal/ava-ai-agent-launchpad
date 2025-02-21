@@ -530,11 +530,11 @@ Image Prompt: ${imagePrompt}`,
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
-        <div className="w-full max-w-[900px] bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
+        <div className="w-full container bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
           <button
             onClick={() => setStep(1)}
             disabled={loading}
-            className="mb-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="w-full self-center mb-6 px-6 py-3 bg-violet-600 text-white rounded hover:bg-violet-700 disabled:opacity-50"
           >
             Launch AI Agent
           </button>
@@ -547,16 +547,21 @@ Image Prompt: ${imagePrompt}`,
                   setSelectedTokenAddress(agent.tokenAddress);
                   setStep(4);
                 }}
-                className="bg-zinc-800 rounded p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                className="bg-zinc-800 rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
               >
                 <div className="flex">
                   <img
                     src={agent.image}
                     alt={agent.name}
-                    className="w-20 h-20 rounded mr-4 object-cover"
+                    className="w-24 h-24 rounded-lg mr-4 object-cover object-top"
                   />
                   <div>
                     <h2 className="text-white text-xl font-bold">{agent.name}</h2>
+                    {agent.tokenAddress && (
+                      <p className="text-xs text-yellow-500 font-bold">
+                        Token: {agent.tokenAddress.substring(0, 6)}...{agent.tokenAddress.substring(agent.tokenAddress.length - 4)}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-300">
                       {agent.profession} | {agent.race}
                     </p>
@@ -710,7 +715,7 @@ Image Prompt: ${imagePrompt}`,
             <div>
               <h1 className="text-white text-xl font-bold">{agentData?.name || name}</h1>
               {agentData?.tokenAddress && (
-                <p className="text-xs text-gray-300">Token: {agentData.tokenAddress}</p>
+                <p className="text-xs text-yellow-500 font-bold">Token: {agentData.tokenAddress}</p>
               )}
             </div>
           </header>
