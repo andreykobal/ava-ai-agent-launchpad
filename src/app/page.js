@@ -11,6 +11,13 @@ export default function Home() {
   const [generatedImage, setGeneratedImage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Step 3 additional fields
+  const [age, setAge] = useState("");
+  const [race, setRace] = useState("");
+  const [profession, setProfession] = useState("");
+  const [bio, setBio] = useState("");
+  const [firstMessage, setFirstMessage] = useState("");
+
   // Create a Civitai client instance
   const civitai = new Civitai({
     auth: process.env.NEXT_PUBLIC_CIVITAI_API_TOKEN,
@@ -239,16 +246,131 @@ export default function Home() {
     }
   };
 
-
   const handleNext = (e) => {
     e.preventDefault();
     console.log("Moving to step 2 with character data:", { name, description });
     setStep(2);
   };
 
-  const handleSubmit = (e) => {
+  // Step 2 Next: Proceed to Step 3 (final details)
+  const handleNextStep2 = (e) => {
     e.preventDefault();
-    console.log("Final submission data:", { name, description, imagePrompt, generatedImage });
+    console.log("Moving to step 3 with image prompt and generated image:", { imagePrompt, generatedImage });
+    setStep(3);
+  };
+
+  // Step 3: AI Writer to fill in additional fields (age, race, profession, bio, first message)
+  const handleAIWriterStep3 = async () => {
+    console.log("Step 3 AI Writer button clicked. Starting API call for additional character details...");
+    setLoading(true);
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-2024-08-06",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an AI writer. Using the provided character details, generate additional character information.",
+            },
+            {
+              role: "user",
+              content: `Generate additional details for a fictional character with the following details:
+Name: "${name}"
+Description: "${description}"
+Image Prompt: "${imagePrompt}"
+Return the result as a JSON object following this schema:
+{
+  "age": string,
+  "race": string,
+  "profession": string,
+  "bio": string,
+  "firstMessage": string
+}`,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "character_details",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  age: { type: "string", description: "Character's age" },
+                  race: { type: "string", description: "Character's race" },
+                  profession: { type: "string", description: "Character's profession" },
+                  bio: { type: "string", description: "Character's biography" },
+                  firstMessage: { type: "string", description: "Character's first message" },
+                },
+                additionalProperties: false,
+                required: ["age", "race", "profession", "bio", "firstMessage"],
+              },
+            },
+          },
+        }),
+      });
+
+      console.log("Step 3 additional details API response received:", response);
+
+      if (!response.ok) {
+        console.error("Step 3 API call failed with status:", response.status);
+        throw new Error("API call failed for additional character details");
+      }
+
+      const result = await response.json();
+      console.log("Parsed additional details JSON result:", result);
+
+      const message = result.choices[0].message;
+      console.log("Step 3 API message object:", message);
+
+      if (message.refusal) {
+        console.error("Refusal received from Step 3 API:", message.refusal);
+        return;
+      }
+
+      let parsed = message.parsed;
+      if (!parsed && message.content) {
+        try {
+          parsed = JSON.parse(message.content);
+        } catch (e) {
+          console.error("Error parsing additional details message content:", e);
+          return;
+        }
+      }
+      console.log("Parsed additional character details:", parsed);
+
+      setAge(parsed.age);
+      setRace(parsed.race);
+      setProfession(parsed.profession);
+      setBio(parsed.bio);
+      setFirstMessage(parsed.firstMessage);
+    } catch (error) {
+      console.error("Error generating additional character details:", error);
+    } finally {
+      setLoading(false);
+      console.log("Step 3 API call completed.");
+    }
+  };
+
+  const handleCreate = (e) => {
+    e.preventDefault();
+    console.log("Final submission data:", {
+      name,
+      description,
+      imagePrompt,
+      generatedImage,
+      age,
+      race,
+      profession,
+      bio,
+      firstMessage,
+    });
     // Further submission logic here...
   };
 
@@ -320,7 +442,7 @@ export default function Home() {
             <h1 className="text-white text-4xl font-bold mb-6">
               Generate Image Prompt
             </h1>
-            <form onSubmit={handleSubmit} className="w-full">
+            <form onSubmit={handleNextStep2} className="w-full">
               <div className="mb-4">
                 <label htmlFor="imagePrompt" className="block text-white mb-1">
                   Image Prompt
@@ -338,10 +460,10 @@ export default function Home() {
                 type="submit"
                 className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
               >
-                Submit
+                Next
               </button>
             </form>
-            {/* New button to generate image using Civitai */}
+            {/* Button to generate image using Civitai */}
             <button
               onClick={handleGenerateImage}
               disabled={loading}
@@ -355,6 +477,111 @@ export default function Home() {
                 <img src={generatedImage} alt="Generated" className="w-full rounded" />
               </div>
             )}
+          </>
+        )}
+        {step === 3 && (
+          <>
+            <h1 className="text-white text-4xl font-bold mb-6">
+              Finalize Character Details
+            </h1>
+            {generatedImage && (
+              <div className="mb-4">
+                <h2 className="text-white text-xl mb-2">Generated Image:</h2>
+                <img src={generatedImage} alt="Generated" className="w-full rounded" />
+              </div>
+            )}
+            <button
+              onClick={handleAIWriterStep3}
+              disabled={loading}
+              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            >
+              {loading ? "Generating..." : "AI Writer"}
+            </button>
+            <form onSubmit={handleCreate} className="w-full">
+              <div className="mb-4">
+                <label htmlFor="name" className="block text-white mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  readOnly
+                  className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="age" className="block text-white mb-1">
+                  Age
+                </label>
+                <input
+                  type="text"
+                  id="age"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                  placeholder="Enter age"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="race" className="block text-white mb-1">
+                  Race
+                </label>
+                <input
+                  type="text"
+                  id="race"
+                  value={race}
+                  onChange={(e) => setRace(e.target.value)}
+                  className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                  placeholder="Enter race"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="profession" className="block text-white mb-1">
+                  Profession
+                </label>
+                <input
+                  type="text"
+                  id="profession"
+                  value={profession}
+                  onChange={(e) => setProfession(e.target.value)}
+                  className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                  placeholder="Enter profession"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="bio" className="block text-white mb-1">
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={4}
+                  className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                  placeholder="Enter bio"
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="firstMessage" className="block text-white mb-1">
+                  First Message
+                </label>
+                <textarea
+                  id="firstMessage"
+                  value={firstMessage}
+                  onChange={(e) => setFirstMessage(e.target.value)}
+                  rows={4}
+                  className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                  placeholder="Enter first message"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              >
+                Create
+              </button>
+            </form>
           </>
         )}
       </div>
