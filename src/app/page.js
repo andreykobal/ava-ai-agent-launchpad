@@ -1,13 +1,20 @@
 'use client';
 
 import { useState } from "react";
+import { Civitai, Scheduler } from "civitai";
 
 export default function Home() {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [imagePrompt, setImagePrompt] = useState("");
+  const [generatedImage, setGeneratedImage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Create a Civitai client instance
+  const civitai = new Civitai({
+    auth: process.env.NEXT_PUBLIC_CIVITAI_API_TOKEN,
+  });
 
   // Step 1: Generate fictional character
   const handleAIWriter = async () => {
@@ -18,7 +25,7 @@ export default function Home() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Remember: secure your API key in production (do not expose it in client code).
+          // Remember: secure your API key in production.
           "Authorization": `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
@@ -88,7 +95,6 @@ export default function Home() {
       }
       console.log("Parsed character data:", parsed);
 
-      // Populate the fields with the received values.
       setName(parsed.name);
       setDescription(parsed.description);
     } catch (error) {
@@ -120,7 +126,7 @@ export default function Home() {
             },
             {
               role: "user",
-              content: `Generate an image prompt of simple 1-2 word commaseparated phrases for a fictional character, starting with gender (1girl or 1boy) with the name "${name}" and description "${description}".`,
+              content: `Generate an image prompt of simple 1-2 word comma-separated phrases for a fictional character, starting with gender (1girl or 1boy) with the name "${name}" and description "${description}".`,
             },
           ],
           response_format: {
@@ -133,7 +139,8 @@ export default function Home() {
                 properties: {
                   imagePrompt: {
                     type: "string",
-                    description: "A descriptive image prompt for generating an image of the fictional character",
+                    description:
+                      "A descriptive image prompt for generating an image of the fictional character",
                   },
                 },
                 additionalProperties: false,
@@ -173,7 +180,6 @@ export default function Home() {
       }
       console.log("Parsed image prompt data:", parsed);
 
-      // Populate the image prompt field.
       setImagePrompt(parsed.imagePrompt);
     } catch (error) {
       console.error("Error generating image prompt:", error);
@@ -183,6 +189,57 @@ export default function Home() {
     }
   };
 
+  // Step 2: Generate image using Civitai
+  const handleGenerateImage = async () => {
+    console.log("Generate Image button clicked. Starting image generation with Civitai...");
+    setLoading(true);
+    try {
+      const input = {
+        model: "urn:air:sdxl:checkpoint:civitai:827184@1410435",
+        params: {
+          prompt: "masterpiece,best quality,amazing quality, cowboy shot, " + imagePrompt,
+          negativePrompt: "bad quality,worst quality,worst detail,sketch,censor,",
+          scheduler: Scheduler.EULER_A,
+          steps: 20,
+          cfgScale: 7,
+          width: 832,
+          height: 1216,
+          clipSkip: 2,
+        },
+      };
+
+      console.log("Civitai input:", input);
+      // Run the generation with long polling
+      const response = await civitai.image.fromText(input, true);
+      console.log("Civitai image generation response:", response);
+
+      // Grab the top-level job
+      const topJob = response.jobs?.[0];
+      if (!topJob?.result?.jobs) {
+        console.error("No nested jobs array found in the result.");
+        return;
+      }
+
+      // Within that top-level job, find the nested job that has the actual image
+      const nestedJob = topJob.result.jobs.find(
+        (j) => j.result?.available && j.result?.blobUrl
+      );
+
+      if (nestedJob) {
+        setGeneratedImage(nestedJob.result.blobUrl);
+        console.log("Generated image URL:", nestedJob.result.blobUrl);
+      } else {
+        console.error("Image generation job did not return a valid image.");
+      }
+    } catch (error) {
+      console.error("Error generating image with Civitai:", error);
+    } finally {
+      setLoading(false);
+      console.log("Civitai image generation completed.");
+    }
+  };
+
+
   const handleNext = (e) => {
     e.preventDefault();
     console.log("Moving to step 2 with character data:", { name, description });
@@ -191,7 +248,7 @@ export default function Home() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Final submission data:", { name, description, imagePrompt });
+    console.log("Final submission data:", { name, description, imagePrompt, generatedImage });
     // Further submission logic here...
   };
 
@@ -279,11 +336,25 @@ export default function Home() {
               </div>
               <button
                 type="submit"
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
               >
                 Submit
               </button>
             </form>
+            {/* New button to generate image using Civitai */}
+            <button
+              onClick={handleGenerateImage}
+              disabled={loading}
+              className="mb-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+            >
+              {loading ? "Generating Image..." : "Generate Image"}
+            </button>
+            {generatedImage && (
+              <div className="mt-4">
+                <h2 className="text-white text-xl mb-2">Generated Image:</h2>
+                <img src={generatedImage} alt="Generated" className="w-full rounded" />
+              </div>
+            )}
           </>
         )}
       </div>
