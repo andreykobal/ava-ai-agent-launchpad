@@ -748,7 +748,7 @@ Image Prompt: ${imagePrompt}`,
             >
               Launch AI Agent
             </button>
-            <h1 className="text-white text-3xl font-bold mb-4">Existing AI Agents</h1>
+            <h1 className="text-white text-3xl font-bold mb-4">All AI Agents</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {(allAgents || []).map((agent, index) => (
                 <div
@@ -909,7 +909,7 @@ Image Prompt: ${imagePrompt}`,
             )}
             {step === 3 && (
               <>
-                <h1 className="text-white text-4xl font-bold mb-6">Finalize Character Details</h1>
+                <h1 className="text-white text-4xl font-bold mb-6">Finalize AI Agent</h1>
                 {generatedImage && (
                   <div className="mb-4">
                     <h2 className="text-white text-xl mb-2">Generated Image:</h2>
