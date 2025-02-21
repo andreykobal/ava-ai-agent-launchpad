@@ -1,3 +1,5 @@
+// @/src/page.js
+
 'use client';
 
 import '@rainbow-me/rainbowkit/styles.css';
