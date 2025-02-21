@@ -338,7 +338,7 @@ For automated social posting, the system creates a complete character file (for 
    ```
 
 4. **Deploy Smart Contracts:**  
-   Use Hardhat or Truffle to compile and deploy contracts located in `smart-contract/src/AIAgentFactory.sol`.
+   Use Foundry to compile and deploy contracts located in `smart-contract/src/AIAgentFactory.sol`.
 
 ---
 
