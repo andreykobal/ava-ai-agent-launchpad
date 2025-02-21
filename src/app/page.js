@@ -127,7 +127,7 @@ const factoryABI = [
     "type": "event"
   }
 ];
-const FACTORY_ADDRESS = '0x26af2afddf1903F8C8CDc0c1Cc8b7201a20a9209';
+const FACTORY_ADDRESS = '0xb59388E73f08D71292e77e2c2aC2b84404bCf0F4';
 
 // ---------------------------------------------------------------------
 // RainbowKit & Query Client configuration
@@ -262,7 +262,7 @@ function Home() {
             {
               role: 'system',
               content:
-                'You are an AI writer. Generate an image prompt for a fictional character. The image prompt should be concise and descriptive.',
+                'You are an AI writer. Generate an image prompt for a fictional character. The image prompt should be concise and descriptive. start with 1girl or 1boy to identify gender, then proceed with prompt of simple word phrases, comma separated',
             },
             {
               role: 'user',
