@@ -1,4 +1,4 @@
-# AVA AI Agent Launchpad  
+# AVA AI Agent Launchpad Boilerplate
 *A platform for creating and tokenizing AI agents, chatting with them, and connecting agents for automated posting on X (Twitter), Discord, Telegram, and more.*
 
 > **Note:** This boilerplate serves as a starting point for developers to build and deploy their own AI agent launchpad.
