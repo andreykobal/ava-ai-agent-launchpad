@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# AVA AI AGENT LAUNCHPAD
+
+AVA AI agent launchpad is a modern web application that lets you create, deploy, and interact with a custom AI agent on the blockchain. It leverages OpenAI's chat API to generate AI agent details and image prompts, uses Civitai to generate high-quality images, and deploys a smart contract to mint your AI agent as a token. Once created, you can even chat with your deployed AI agent in real time.
+
+---
+
+## How It Works
+
+1. **Generate AI Agent Details:**  
+   The app starts by using the OpenAI API to generate the basic details of your AI agent, such as its name and description.
+
+2. **Create an Image Prompt & Generate an Image:**  
+   It then produces a concise image prompt for your AI agent and uses Civitai to generate a matching image.
+
+3. **Finalize & Deploy:**  
+   Additional details (like age, race, profession, bio, and a first message) are generated via OpenAI, and a smart contract function is called to deploy the AI agent on the blockchain.
+
+4. **Chat Interface:**  
+   After deployment, the app offers a chat interface where you can interact with your AI agent, maintaining a dynamic conversation based on the on-chain data.
+
+---
+
+## Code Snippets
+
+### 1. Smart Contract Interaction
+
+This snippet shows how the app sets up the smart contract ABI and calls the `createAIAgent` function to deploy a new AI agent:
+
+```javascript
+// --- Factory ABI and address ---
+const factoryABI = [
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_name", "type": "string" },
+      { "internalType": "uint256", "name": "_age", "type": "uint256" },
+      { "internalType": "string", "name": "_race", "type": "string" },
+      { "internalType": "string", "name": "_profession", "type": "string" },
+      { "internalType": "string", "name": "_bio", "type": "string" },
+      { "internalType": "string", "name": "_firstMessage", "type": "string" },
+      { "internalType": "string", "name": "_image", "type": "string" }
+    ],
+    "name": "createAIAgent",
+    "outputs": [
+      { "internalType": "address", "name": "", "type": "address" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  // ... additional functions and events ...
+];
+const FACTORY_ADDRESS = '0x26af2afddf1903F8C8CDc0c1Cc8b7201a20a9209';
+
+// Using Wagmi's useWriteContract to call the smart contract:
+const { writeContractAsync: createAgent } = useWriteContract();
+
+const handleCreate = async (e) => {
+  e.preventDefault();
+  const txHash = await createAgent({
+    abi: factoryABI,
+    address: FACTORY_ADDRESS,
+    functionName: 'createAIAgent',
+    args: [name, Number(age), race, profession, bio, firstMessage, generatedImage],
+  });
+  // Wait for the transaction to be mined and decode the event log...
+};
+```
+
+### 2. Chat Interaction
+
+Here’s a simplified snippet showing how user messages are sent to the OpenAI chat API and responses are handled to maintain a conversation with the AI agent:
+
+```javascript
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  if (!chatInput.trim()) return;
+  
+  // Append user's message to the conversation
+  const newUserMessage = { role: 'user', content: chatInput.trim() };
+  let updatedMessages = [...messages, newUserMessage];
+  setMessages(updatedMessages);
+  setChatInput('');
+  
+  // Call OpenAI's chat API to get the AI agent's response
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-2024-08-06',
+      messages: updatedMessages,
+    }),
+  });
+  
+  const result = await response.json();
+  const message = result.choices[0].message;
+  setMessages([...updatedMessages, message]);
+};
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone the repository:**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+   ```bash
+   git clone https://github.com/yourusername/ava-ai-agent-launchpad.git
+   cd ava-ai-agent-launchpad
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies:**
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Configure Environment Variables:**  
+   Create a `.env` file with your API keys and RPC URLs (for OpenAI, Civitai, WalletConnect, etc.).
 
-## Learn More
+4. **Run the application:**
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npm run dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Now, you can generate, deploy, and chat with your very own AI agent!
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Happy building with ava ai agent launchpad!
