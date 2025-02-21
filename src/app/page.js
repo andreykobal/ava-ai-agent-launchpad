@@ -380,7 +380,8 @@ Return the result as a JSON object following this schema:
     console.log("Step 3 -> 4: Moving to step 4 (Chat UI)");
   };
 
-  // When step 4 loads, initialize the chat context with a system message containing all character data
+  // When step 4 loads, initialize the chat context
+  // Include a hidden system message and the character's first message
   useEffect(() => {
     if (step === 4) {
       const systemMessage = {
@@ -392,13 +393,30 @@ Age: ${age}
 Race: ${race}
 Profession: ${profession}
 Bio: ${bio}
-First Message: ${firstMessage}
 Image Prompt: ${imagePrompt}`,
       };
-      console.log("Step 4: Initializing chat context with system message:", systemMessage);
-      setMessages([systemMessage]);
+      const characterFirstMessage = {
+        role: "assistant",
+        content: firstMessage,
+      };
+      console.log("Step 4: Initializing chat context with system and first character message:", {
+        systemMessage,
+        characterFirstMessage,
+      });
+      setMessages([systemMessage, characterFirstMessage]);
     }
   }, [step]);
+
+  // Auto-scroll to the last message whenever messages update
+  useEffect(() => {
+    const chatContainer = document.getElementById("chat-container");
+    if (chatContainer) {
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
 
   // Handle sending chat messages in step 4
   const handleSendMessage = async (e) => {
@@ -680,19 +698,21 @@ Image Prompt: ${imagePrompt}`,
           </header>
           {/* Chat messages container */}
           <div className="flex-1 overflow-y-auto p-4" id="chat-container">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`mb-2 ${msg.role === "user" ? "text-right" : "text-left"}`}
-              >
-                <span
-                  className={`inline-block p-2 rounded ${msg.role === "user" ? "bg-blue-500 text-white" : "bg-gray-300 text-black"
-                    }`}
+            {messages
+              .filter((msg) => msg.role !== "system") // hide the system message in UI
+              .map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`mb-2 ${msg.role === "user" ? "text-right" : "text-left"}`}
                 >
-                  {msg.content}
-                </span>
-              </div>
-            ))}
+                  <span
+                    className={`inline-block text-sm max-w-[80%] p-2 rounded-xl bg-opacity-80 backdrop-blur-xl ${msg.role === "user" ? "bg-purple-600 text-white" : "bg-neutral-900 text-white"
+                      }`}
+                  >
+                    {msg.content}
+                  </span>
+                </div>
+              ))}
           </div>
           {/* Chat input */}
           <div className="p-4 bg-black bg-opacity-50">
