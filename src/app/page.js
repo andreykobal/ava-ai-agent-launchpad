@@ -12,34 +12,26 @@ import { http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import { Civitai, Scheduler } from 'civitai';
+import { FaPaperPlane, FaHome } from 'react-icons/fa';
 import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { PinataSDK } from 'pinata-web3';
-import { FaPaperPlane, FaHome } from 'react-icons/fa';
-
 
 // ---------------------------------------------------------------------
 // Helper function: Upload image from a given URL to Pinata
 // ---------------------------------------------------------------------
 async function uploadImageToPinata(imageUrl) {
   try {
-    // Fetch the image blob from the Civitai URL
     const response = await fetch(imageUrl);
     const blob = await response.blob();
-    // Create a File object from the blob (works in the browser)
     const file = new File([blob], "generated-image.png", { type: blob.type });
-    // Initialize Pinata SDK with JWT and gateway from env variables
     const pinata = new PinataSDK({
       pinataJwt: process.env.NEXT_PUBLIC_PINATA_JWT,
       pinataGateway: process.env.NEXT_PUBLIC_GATEWAY_URL,
     });
-    // Upload the file to Pinata
     const uploadResponse = await pinata.upload.file(file);
     console.debug('uploadImageToPinata: Upload response', uploadResponse);
-    // Construct the final Pinata gateway URL using the returned IpfsHash
     const pinataGatewayToken = process.env.NEXT_PUBLIC_PINATA_GATEWAY_TOKEN;
-
-    // ... after uploading the file to Pinata, update the URL construction:
     const pinataUrl = `https://${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${uploadResponse.IpfsHash}?pinataGatewayToken=${pinataGatewayToken}`;
     return pinataUrl;
   } catch (error) {
@@ -157,9 +149,10 @@ const civitai = new Civitai({
 
 function Home() {
   // -------------------------------------------------------------------
-  // State declarations for character creation and chat flow
+  // State declarations for character creation, chat flow, and refresh
   // -------------------------------------------------------------------
   const [step, setStep] = useState(0);
+  const [refreshCounter, setRefreshCounter] = useState(0);
   const [selectedTokenAddress, setSelectedTokenAddress] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -177,13 +170,14 @@ function Home() {
   const [chatInput, setChatInput] = useState('');
 
   // -------------------------------------------------------------------
-  // Fetch existing AI agents from the contract
+  // Fetch existing AI agents from the contract with a dynamic scopeKey
   // -------------------------------------------------------------------
   const { data: allAgents } = useReadContract({
     abi: factoryABI,
     address: FACTORY_ADDRESS,
     functionName: 'getAllAIAgents',
     enabled: true,
+    scopeKey: `agents-${refreshCounter}`,
   });
 
   // -------------------------------------------------------------------
@@ -338,7 +332,6 @@ function Home() {
       );
       if (nestedJob) {
         console.debug('handleGenerateImage: Generated image URL', nestedJob.result.blobUrl);
-        // Upload the generated image to Pinata instead of using the Civitai URL directly.
         const pinataUrl = await uploadImageToPinata(nestedJob.result.blobUrl);
         console.debug('handleGenerateImage: Pinata URL', pinataUrl);
         setGeneratedImage(pinataUrl);
@@ -589,53 +582,68 @@ Image Prompt: ${imagePrompt}`,
   // -------------------------------------------------------------------
   if (step === 0) {
     return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
-        <div className="w-full container bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
+      <>
+        {/* Fixed Home Button always displayed at the top left */}
+        <div className="fixed top-4 left-4 z-50">
           <button
-            onClick={() => setStep(1)}
-            disabled={loading}
-            className="w-full self-center mb-6 px-6 py-3 bg-violet-600 text-white rounded hover:bg-violet-700 disabled:opacity-50"
+            onClick={() => {
+              setStep(0);
+              setRefreshCounter((prev) => prev + 1);
+            }}
+            className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
           >
-            Launch AI Agent
+            <FaHome className="text-xl" />
+            <span>Home</span>
           </button>
-          <h1 className="text-white text-3xl font-bold mb-4">Existing AI Agents</h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {(allAgents || []).map((agent, index) => (
-              <div
-                key={index}
-                onClick={() => {
-                  setSelectedTokenAddress(agent.tokenAddress);
-                  setStep(4);
-                }}
-                className="bg-zinc-800 rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
-              >
-                <div className="flex">
-                  <img
-                    src={agent.image}
-                    alt={agent.name}
-                    className="w-24 h-24 rounded-lg mr-4 object-cover object-top"
-                  />
-                  <div>
-                    <h2 className="text-white text-xl font-bold">{agent.name}</h2>
-                    {agent.tokenAddress && (
-                      <p className="text-xs text-yellow-500 font-bold">
-                        Token: {agent.tokenAddress.substring(0, 6)}...{agent.tokenAddress.substring(agent.tokenAddress.length - 4)}
+        </div>
+        <div className="relative min-h-screen flex flex-col items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
+          <div className="w-full container bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
+            <button
+              onClick={() => setStep(1)}
+              disabled={loading}
+              className="w-full self-center mb-6 px-6 py-3 bg-violet-600 text-white rounded hover:bg-violet-700 disabled:opacity-50"
+            >
+              Launch AI Agent
+            </button>
+            <h1 className="text-white text-3xl font-bold mb-4">Existing AI Agents</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {(allAgents || []).map((agent, index) => (
+                <div
+                  key={index}
+                  onClick={() => {
+                    setSelectedTokenAddress(agent.tokenAddress);
+                    setStep(4);
+                  }}
+                  className="bg-zinc-800 rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                >
+                  <div className="flex">
+                    <img
+                      src={agent.image}
+                      alt={agent.name}
+                      className="w-24 h-24 rounded-lg mr-4 object-cover object-top"
+                    />
+                    <div>
+                      <h2 className="text-white text-xl font-bold">{agent.name}</h2>
+                      {agent.tokenAddress && (
+                        <p className="text-xs text-yellow-500 font-bold">
+                          Token: {agent.tokenAddress.substring(0, 6)}...{agent.tokenAddress.substring(agent.tokenAddress.length - 4)}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-300">
+                        {agent.profession} | {agent.race}
                       </p>
-                    )}
-                    <p className="text-sm text-gray-300">
-                      {agent.profession} | {agent.race}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {agent.bio.length > 50 ? agent.bio.substring(0, 50) + '...' : agent.bio}
-                    </p>
+                      <p className="text-sm text-gray-400">
+                        {agent.bio.length > 50 ? agent.bio.substring(0, 50) + '...' : agent.bio}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -644,243 +652,245 @@ Image Prompt: ${imagePrompt}`,
       {/* Fixed Home Button always displayed at the top left */}
       <div className="fixed top-4 left-4 z-50">
         <button
-          onClick={() => setStep(0)}
+          onClick={() => {
+            setStep(0);
+            setRefreshCounter((prev) => prev + 1);
+          }}
           className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
         >
           <FaHome className="text-xl" />
           <span>Home</span>
         </button>
       </div>
-
-    <div className="relative min-h-screen flex items-center justify-center">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
-      {step < 4 ? (
-        <div className="w-full max-w-[500px] bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
-          {step === 1 && (
-            <>
-              <button
-                onClick={handleAIWriter}
-                disabled={loading}
-                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-              >
-                {loading ? 'Generating...' : 'AI Writer'}
-              </button>
-              <h1 className="text-white text-4xl font-bold mb-6">Create Fictional Character</h1>
-              <div className="mb-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={createWithAI}
-                    onChange={(e) => setCreateWithAI(e.target.checked)}
-                    className="form-checkbox"
-                  />
-                  <span className="ml-2 text-white">Create with AI</span>
-                </label>
+      <div className="relative min-h-screen flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 filter blur-3xl z-[-1]" />
+        {step < 4 ? (
+          <div className="w-full max-w-[500px] bg-zinc-900 bg-opacity-50 mx-auto relative z-10 flex flex-col p-6">
+            {step === 1 && (
+              <>
+                <button
+                  onClick={handleAIWriter}
+                  disabled={loading}
+                  className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                >
+                  {loading ? 'Generating...' : 'AI Writer'}
+                </button>
+                <h1 className="text-white text-4xl font-bold mb-6">Create Fictional Character</h1>
+                <div className="mb-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={createWithAI}
+                      onChange={(e) => setCreateWithAI(e.target.checked)}
+                      className="form-checkbox"
+                    />
+                    <span className="ml-2 text-white">Create with AI</span>
+                  </label>
+                </div>
+                <form onSubmit={handleNext} className="w-full">
+                  <div className="mb-4">
+                    <label htmlFor="name" className="block text-white mb-1">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter character name"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="description" className="block text-white mb-1">Description</label>
+                    <textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter character description"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!name || !description}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </form>
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <button
+                  onClick={handleAIImagePrompt}
+                  disabled={loading}
+                  className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                >
+                  {loading ? 'Generating...' : 'AI Writer'}
+                </button>
+                <h1 className="text-white text-4xl font-bold mb-6">Generate Image Prompt</h1>
+                <form onSubmit={handleNextStep2} className="w-full">
+                  <div className="mb-4">
+                    <label htmlFor="imagePrompt" className="block text-white mb-1">Image Prompt</label>
+                    <textarea
+                      id="imagePrompt"
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      rows={4}
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter image prompt"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!generatedImage}
+                    className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </form>
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={loading}
+                  className="mb-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
+                >
+                  {loading ? 'Generating Image...' : 'Generate Image'}
+                </button>
+                {generatedImage && (
+                  <div className="mt-4">
+                    <h2 className="text-white text-xl mb-2">Generated Image:</h2>
+                    <img src={generatedImage} alt="Generated" className="w-full rounded" />
+                  </div>
+                )}
+              </>
+            )}
+            {step === 3 && (
+              <>
+                <h1 className="text-white text-4xl font-bold mb-6">Finalize Character Details</h1>
+                {generatedImage && (
+                  <div className="mb-4">
+                    <h2 className="text-white text-xl mb-2">Generated Image:</h2>
+                    <img src={generatedImage} alt="Generated" className="w-full rounded" />
+                  </div>
+                )}
+                <button
+                  onClick={handleAIWriterStep3}
+                  disabled={loading}
+                  className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                >
+                  {loading ? 'Generating...' : 'AI Writer'}
+                </button>
+                <form onSubmit={handleCreate} className="w-full">
+                  <div className="mb-4">
+                    <label htmlFor="name" className="block text-white mb-1">Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={name}
+                      readOnly
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="age" className="block text-white mb-1">Age</label>
+                    <input
+                      type="number"
+                      id="age"
+                      value={age}
+                      onChange={(e) =>
+                        setAge(e.target.value ? Number(e.target.value) : '')
+                      }
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter age"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="race" className="block text-white mb-1">Race</label>
+                    <input
+                      type="text"
+                      id="race"
+                      value={race}
+                      onChange={(e) => setRace(e.target.value)}
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter race"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="profession" className="block text-white mb-1">Profession</label>
+                    <input
+                      type="text"
+                      id="profession"
+                      value={profession}
+                      onChange={(e) => setProfession(e.target.value)}
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter profession"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="bio" className="block text-white mb-1">Bio</label>
+                    <textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={4}
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter bio"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="firstMessage" className="block text-white mb-1">First Message</label>
+                    <textarea
+                      id="firstMessage"
+                      value={firstMessage}
+                      onChange={(e) => setFirstMessage(e.target.value)}
+                      rows={4}
+                      className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
+                      placeholder="Enter first message"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!age || !race || !profession || !bio || !firstMessage}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                  >
+                    Create
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        ) : (
+          <div style={{ backgroundImage: `url(${agentData?.image || generatedImage})` }} className="w-full max-w-[500px] h-screen bg-cover bg-center mx-auto relative flex flex-col">
+            <header className="flex items-center p-4 bg-black bg-opacity-50">
+              <img src={agentData?.image || generatedImage} alt="Avatar" className="w-10 h-10 rounded-full object-cover object-top mr-4" />
+              <div>
+                <h1 className="text-white text-xl font-bold">{agentData?.name || name}</h1>
+                {agentData?.tokenAddress && (
+                  <p className="text-xs text-yellow-500 font-bold">Token: {agentData.tokenAddress}</p>
+                )}
               </div>
-              <form onSubmit={handleNext} className="w-full">
-                <div className="mb-4">
-                  <label htmlFor="name" className="block text-white mb-1">Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter character name"
-                  />
+            </header>
+            <div className="flex-1 overflow-y-auto p-4" id="chat-container">
+              {messages.filter((msg) => msg.role !== 'system').map((msg, idx) => (
+                <div key={idx} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                  <span className={`inline-block text-sm max-w-[80%] p-2 rounded-xl bg-opacity-80 backdrop-blur-xl ${msg.role === 'user' ? 'bg-purple-600 text-white' : 'bg-neutral-900 text-white'}`}>
+                    {msg.content}
+                  </span>
                 </div>
-                <div className="mb-4">
-                  <label htmlFor="description" className="block text-white mb-1">Description</label>
-                  <textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter character description"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!name || !description}
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </form>
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <button
-                onClick={handleAIImagePrompt}
-                disabled={loading}
-                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-              >
-                {loading ? 'Generating...' : 'AI Writer'}
-              </button>
-              <h1 className="text-white text-4xl font-bold mb-6">Generate Image Prompt</h1>
-              <form onSubmit={handleNextStep2} className="w-full">
-                <div className="mb-4">
-                  <label htmlFor="imagePrompt" className="block text-white mb-1">Image Prompt</label>
-                  <textarea
-                    id="imagePrompt"
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    rows={4}
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter image prompt"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!generatedImage}
-                  className="mb-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </form>
-              <button
-                onClick={handleGenerateImage}
-                disabled={loading}
-                className="mb-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
-              >
-                {loading ? 'Generating Image...' : 'Generate Image'}
-              </button>
-              {generatedImage && (
-                <div className="mt-4">
-                  <h2 className="text-white text-xl mb-2">Generated Image:</h2>
-                  <img src={generatedImage} alt="Generated" className="w-full rounded" />
-                </div>
-              )}
-            </>
-          )}
-          {step === 3 && (
-            <>
-              <h1 className="text-white text-4xl font-bold mb-6">Finalize Character Details</h1>
-              {generatedImage && (
-                <div className="mb-4">
-                  <h2 className="text-white text-xl mb-2">Generated Image:</h2>
-                  <img src={generatedImage} alt="Generated" className="w-full rounded" />
-                </div>
-              )}
-              <button
-                onClick={handleAIWriterStep3}
-                disabled={loading}
-                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-              >
-                {loading ? 'Generating...' : 'AI Writer'}
-              </button>
-              <form onSubmit={handleCreate} className="w-full">
-                <div className="mb-4">
-                  <label htmlFor="name" className="block text-white mb-1">Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={name}
-                    readOnly
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="age" className="block text-white mb-1">Age</label>
-                  <input
-                    type="number"
-                    id="age"
-                    value={age}
-                    onChange={(e) =>
-                      setAge(e.target.value ? Number(e.target.value) : '')
-                    }
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter age"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="race" className="block text-white mb-1">Race</label>
-                  <input
-                    type="text"
-                    id="race"
-                    value={race}
-                    onChange={(e) => setRace(e.target.value)}
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter race"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="profession" className="block text-white mb-1">Profession</label>
-                  <input
-                    type="text"
-                    id="profession"
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter profession"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="bio" className="block text-white mb-1">Bio</label>
-                  <textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={4}
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter bio"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="firstMessage" className="block text-white mb-1">First Message</label>
-                  <textarea
-                    id="firstMessage"
-                    value={firstMessage}
-                    onChange={(e) => setFirstMessage(e.target.value)}
-                    rows={4}
-                    className="w-full p-2 rounded bg-zinc-800 text-white border border-zinc-600"
-                    placeholder="Enter first message"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!age || !race || !profession || !bio || !firstMessage}
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-                >
-                  Create
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-      ) : (
-        <div style={{ backgroundImage: `url(${agentData?.image || generatedImage})` }} className="w-full max-w-[500px] h-screen bg-cover bg-center mx-auto relative flex flex-col">
-          <header className="flex items-center p-4 bg-black bg-opacity-50">
-            <img src={agentData?.image || generatedImage} alt="Avatar" className="w-10 h-10 rounded-full object-cover object-top mr-4" />
-            <div>
-              <h1 className="text-white text-xl font-bold">{agentData?.name || name}</h1>
-              {agentData?.tokenAddress && (
-                <p className="text-xs text-yellow-500 font-bold">Token: {agentData.tokenAddress}</p>
-              )}
+              ))}
             </div>
-          </header>
-          <div className="flex-1 overflow-y-auto p-4" id="chat-container">
-            {messages.filter((msg) => msg.role !== 'system').map((msg, idx) => (
-              <div key={idx} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                <span className={`inline-block text-sm max-w-[80%] p-2 rounded-xl bg-opacity-80 backdrop-blur-xl ${msg.role === 'user' ? 'bg-purple-600 text-white' : 'bg-neutral-900 text-white'}`}>
-                  {msg.content}
-                </span>
-              </div>
-            ))}
+            <div className="p-4 bg-black bg-opacity-50">
+              <form onSubmit={handleSendMessage} className="flex">
+                <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="flex-1 text-black p-2 rounded-l" placeholder="Type your message..." />
+                <button type="submit" className="p-4 bg-violet-500 rounded-r">
+                  <FaPaperPlane className="text-white text-xl" />
+                </button>
+              </form>
+            </div>
           </div>
-          <div className="p-4 bg-black bg-opacity-50">
-            <form onSubmit={handleSendMessage} className="flex">
-              <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} className="flex-1 text-black p-2 rounded-l" placeholder="Type your message..." />
-              <button type="submit" className="p-4 bg-violet-500 rounded-r">
-                <FaPaperPlane className="text-white text-xl" />
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </>
   );
 }
@@ -891,7 +901,6 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
           <div className="relative min-h-screen">
-
             <div className="fixed top-4 right-4 z-50">
               <ConnectButton />
             </div>
