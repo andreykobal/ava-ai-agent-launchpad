@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Civitai, Scheduler } from "civitai";
+import { FaPaperPlane } from "react-icons/fa";
+
 
 export default function Home() {
   const [step, setStep] = useState(1);
@@ -716,14 +718,17 @@ Image Prompt: ${imagePrompt}`,
           </div>
           {/* Chat input */}
           <div className="p-4 bg-black bg-opacity-50">
-            <form onSubmit={handleSendMessage}>
+            <form onSubmit={handleSendMessage} className="flex">
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="w-full p-2 rounded"
+                className="flex-1 text-black p-2 rounded-l"
                 placeholder="Type your message..."
               />
+              <button type="submit" className="p-4 bg-violet-500 rounded-r">
+                <FaPaperPlane className="text-white text-xl" />
+              </button>
             </form>
           </div>
         </div>
