@@ -283,8 +283,8 @@ For automated social posting, the system creates a complete character file (for 
                 setDownloading(false);
                 }
             };
-```
-```
+    ```
+
 ---
 
 ## Features
