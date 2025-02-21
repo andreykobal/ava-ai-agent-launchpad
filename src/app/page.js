@@ -14,10 +14,10 @@ import { useState, useEffect } from 'react';
 import { Civitai, Scheduler } from 'civitai';
 import { FaPaperPlane } from 'react-icons/fa';
 import { decodeEventLog } from 'viem';
+import { waitForTransactionReceipt } from '@wagmi/core';
 
-// --- Updated Factory ABI and address ---
-// Note: The ABI is cast as const for proper type inference.
-// The event "AIAgentCreated" is added to enable decoding.
+// --- Factory ABI and address ---
+// Ensure the ABI is cast as const for proper type inference.
 const factoryABI = [
   {
     "inputs": [
@@ -120,9 +120,10 @@ function Home() {
     auth: process.env.NEXT_PUBLIC_CIVITAI_API_TOKEN,
   });
 
-  // STEP 1: Generate character details.
+  // --- STEP 1: Generate character details ---
   const handleAIWriter = async () => {
     setLoading(true);
+    console.debug('handleAIWriter: Start');
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -167,18 +168,21 @@ function Home() {
       if (!parsed && message.content) {
         parsed = JSON.parse(message.content);
       }
+      console.debug('handleAIWriter: Parsed character', parsed);
       setName(parsed.name);
       setDescription(parsed.description);
     } catch (error) {
       console.error('Error generating character:', error);
     } finally {
       setLoading(false);
+      console.debug('handleAIWriter: End');
     }
   };
 
-  // STEP 2: Generate image prompt and image.
+  // --- STEP 2: Generate image prompt and image ---
   const handleAIImagePrompt = async () => {
     setLoading(true);
+    console.debug('handleAIImagePrompt: Start');
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -222,16 +226,19 @@ function Home() {
       if (!parsed && message.content) {
         parsed = JSON.parse(message.content);
       }
+      console.debug('handleAIImagePrompt: Parsed image prompt', parsed);
       setImagePrompt(parsed.imagePrompt);
     } catch (error) {
       console.error('Error generating image prompt:', error);
     } finally {
       setLoading(false);
+      console.debug('handleAIImagePrompt: End');
     }
   };
 
   const handleGenerateImage = async () => {
     setLoading(true);
+    console.debug('handleGenerateImage: Start');
     try {
       const input = {
         model: 'urn:air:sdxl:checkpoint:civitai:827184@1410435',
@@ -247,6 +254,7 @@ function Home() {
         },
       };
       const response = await civitai.image.fromText(input, true);
+      console.debug('handleGenerateImage: Response from Civitai', response);
       const topJob = response.jobs?.[0];
       if (!topJob?.result?.jobs) {
         console.error('No nested jobs found.');
@@ -256,6 +264,7 @@ function Home() {
         (j) => j.result?.available && j.result?.blobUrl
       );
       if (nestedJob) {
+        console.debug('handleGenerateImage: Generated image URL', nestedJob.result.blobUrl);
         setGeneratedImage(nestedJob.result.blobUrl);
       } else {
         console.error('Image generation failed.');
@@ -264,6 +273,7 @@ function Home() {
       console.error('Error generating image:', error);
     } finally {
       setLoading(false);
+      console.debug('handleGenerateImage: End');
     }
   };
 
@@ -277,9 +287,10 @@ function Home() {
     setStep(3);
   };
 
-  // STEP 3: Generate additional character details.
+  // --- STEP 3: Generate additional character details ---
   const handleAIWriterStep3 = async () => {
     setLoading(true);
+    console.debug('handleAIWriterStep3: Start');
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -330,6 +341,7 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
       if (!parsed && message.content) {
         parsed = JSON.parse(message.content);
       }
+      console.debug('handleAIWriterStep3: Parsed additional details', parsed);
       setAge(parsed.age);
       setRace(parsed.race);
       setProfession(parsed.profession);
@@ -339,24 +351,32 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
       console.error('Error generating additional details:', error);
     } finally {
       setLoading(false);
+      console.debug('handleAIWriterStep3: End');
     }
   };
 
-  // NEW: STEP 3 Create Button uses a write contract transaction.
-  // We use useWriteContract to call createAIAgent and then, instead of ethers,
-  // use viem's decodeEventLog to decode the transaction logs.
+  // --- STEP 3 Create: Write contract and wait for receipt ---
+  // We use useWriteContract to call createAIAgent.
+  // Note: createAgent returns the transaction hash (a string).
   const { writeContractAsync: createAgent } = useWriteContract();
   const handleCreate = async (e) => {
     e.preventDefault();
     setLoading(true);
+    console.debug('handleCreate: Start');
     try {
-      const tx = await createAgent({
+      const txHash = await createAgent({
         abi: factoryABI,
         address: FACTORY_ADDRESS,
         functionName: 'createAIAgent',
         args: [name, Number(age), race, profession, bio, firstMessage, generatedImage],
       });
-      const receipt = await tx.wait();
+      console.debug('handleCreate: Transaction hash:', txHash);
+      const receipt = await waitForTransactionReceipt(config, {
+        chainId: baseSepolia.id,
+        hash: txHash,
+        pollingInterval: 1000,
+      });
+      console.debug('handleCreate: Transaction receipt:', receipt);
       let deployedTokenAddress = '';
       for (const log of receipt.logs) {
         try {
@@ -365,27 +385,31 @@ Return a JSON with properties: age, race, profession, bio, firstMessage.`,
             data: log.data,
             topics: log.topics,
           });
+          console.debug('handleCreate: Decoded log:', decoded);
           if (decoded.eventName === 'AIAgentCreated') {
             deployedTokenAddress = decoded.args.tokenAddress;
             break;
           }
         } catch (err) {
-          // Skip logs that do not decode.
+          console.debug('handleCreate: Log could not be decoded, skipping.', err);
         }
       }
       if (!deployedTokenAddress) {
         throw new Error('Token address not found in transaction logs');
       }
+      console.debug('handleCreate: Deployed token address:', deployedTokenAddress);
       setTokenAddress(deployedTokenAddress);
       setStep(4);
     } catch (error) {
       console.error('Error creating AI agent:', error);
     } finally {
       setLoading(false);
+      console.debug('handleCreate: End');
     }
   };
 
-  // STEP 4: Chat. Use useReadContract to fetch on-chain agent details.
+  // --- STEP 4: Chat --- 
+  // Use useReadContract to fetch on-chain agent details.
   const { data: agentData } = useReadContract({
     abi: factoryABI,
     address: FACTORY_ADDRESS,
