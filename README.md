@@ -261,30 +261,30 @@ For automated social posting, the system creates a complete character file (for 
           messages: [
             { role: 'system', content: 'Generate a complete JSON character file for AI agent Eliza for social automation.' },
             { role: 'user', content: `Using token metadata:
-Name: "${agentData.name}"
-Age: ${agentData.age}
-Race: "${agentData.race}"
-Profession: "${agentData.profession}"
-Bio: "${agentData.bio}"
-First Message: "${agentData.firstMessage}"
-Image: "${agentData.image}"
-Token Address: "${agentData.tokenAddress}"
-Follow the provided schema strictly.` },
-          ],
-          temperature: 0.7,
-          max_tokens: 800,
-        }),
-      });
-      const result = await response.json();
-      // Process and download the JSON file as 'eliza_character_file.json'
-    } catch (error) {
-      console.error('Error generating character file:', error);
-    } finally {
-      setDownloading(false);
-    }
-  };
-  ```
-
+            Name: "${agentData.name}"
+            Age: ${agentData.age}
+            Race: "${agentData.race}"
+            Profession: "${agentData.profession}"
+            Bio: "${agentData.bio}"
+            First Message: "${agentData.firstMessage}"
+            Image: "${agentData.image}"
+            Token Address: "${agentData.tokenAddress}"
+            Follow the provided schema strictly.` },
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 800,
+                    }),
+                });
+                const result = await response.json();
+                // Process and download the JSON file as 'eliza_character_file.json'
+                } catch (error) {
+                console.error('Error generating character file:', error);
+                } finally {
+                setDownloading(false);
+                }
+            };
+```
+```
 ---
 
 ## Features
