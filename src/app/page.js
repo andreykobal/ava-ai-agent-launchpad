@@ -794,7 +794,7 @@ Image Prompt: ${imagePrompt}`,
       ) : (
         <div style={{ backgroundImage: `url(${agentData?.image || generatedImage})` }} className="w-full max-w-[500px] h-screen bg-cover bg-center mx-auto relative flex flex-col">
           <header className="flex items-center p-4 bg-black bg-opacity-50">
-            <img src={agentData?.image || generatedImage} alt="Avatar" className="w-10 h-10 rounded-full mr-4" />
+            <img src={agentData?.image || generatedImage} alt="Avatar" className="w-10 h-10 rounded-full object-cover object-top mr-4" />
             <div>
               <h1 className="text-white text-xl font-bold">{agentData?.name || name}</h1>
               {agentData?.tokenAddress && (
