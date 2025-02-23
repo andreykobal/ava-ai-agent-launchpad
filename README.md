@@ -34,12 +34,9 @@
 - **Enable Live Chat:** Chat interactively with your AI agents.
 - **Automate Socials:** Produce detailed character files (e.g., for Eliza) to drive automated social posts on platforms like X (Twitter), Discord, Telegram, and more.
 
-<<<<<<< HEAD
-=======
 ![Create-Next-App-02-21-2025_11_00_AM](https://github.com/user-attachments/assets/75a0930e-388e-4be0-8ed5-f9d3481c29b4)
 ![Create-Next-App-02-21-2025_11_13_AM](https://github.com/user-attachments/assets/480e6c45-f713-49a2-9b02-717e402ff073)
 
->>>>>>> b3eb3d45810d9e3fd902e1a03d0e9034e5fcece7
 ---
 
 ## Problem Statement
