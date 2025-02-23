@@ -1,5 +1,7 @@
-# AVA AI Agent Launchpad  
+# AVA AI Agent Launchpad Boilerplate
 *A platform for creating and tokenizing AI agents, chatting with them, and connecting agents for automated posting on X (Twitter), Discord, Telegram, and more.*
+
+> **Note:** This boilerplate serves as a starting point for developers to build and deploy their own AI agent launchpad.
 
 ---
 
@@ -15,6 +17,7 @@
   - [4. Creating Eliza’s Character File](#4-creating-elizas-character-file)
 - [Features](#features)
 - [Installation & Setup](#installation--setup)
+- [Tech Stack](#tech-stack)
 - [Usage](#usage)
 - [Roadmap & Milestones](#roadmap--milestones)
 - [Impact & Future Vision](#impact--future-vision)
@@ -29,8 +32,14 @@
 - **Create AI Agents:** Generate dynamic character profiles and images with AI.
 - **Tokenize Characters:** Deploy smart contracts that create an ERC20 token for each agent.
 - **Enable Live Chat:** Chat interactively with your AI agents.
-- **Automate Socials:** Produce detailed character files (e.g., for Eliza) to drive automated social posts on platforms like X (Twitter), Discord, and Telegram.
+- **Automate Socials:** Produce detailed character files (e.g., for Eliza) to drive automated social posts on platforms like X (Twitter), Discord, Telegram, and more.
 
+<<<<<<< HEAD
+=======
+![Create-Next-App-02-21-2025_11_00_AM](https://github.com/user-attachments/assets/75a0930e-388e-4be0-8ed5-f9d3481c29b4)
+![Create-Next-App-02-21-2025_11_13_AM](https://github.com/user-attachments/assets/480e6c45-f713-49a2-9b02-717e402ff073)
+
+>>>>>>> b3eb3d45810d9e3fd902e1a03d0e9034e5fcece7
 ---
 
 ## Problem Statement
@@ -256,20 +265,20 @@ For automated social posting, the system creates a complete character file (for 
             Image: "${agentData.image}"
             Token Address: "${agentData.tokenAddress}"
             Follow the provided schema strictly.` },
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 800,
-                    }),
-                });
-                const result = await response.json();
-                // Process and download the JSON file as 'eliza_character_file.json'
-                } catch (error) {
-                console.error('Error generating character file:', error);
-                } finally {
-                setDownloading(false);
-                }
-            };
-    ```
+          ],
+          temperature: 0.7,
+          max_tokens: 800,
+        }),
+      });
+      const result = await response.json();
+      // Process and download the JSON file as 'eliza_character_file.json'
+    } catch (error) {
+      console.error('Error generating character file:', error);
+    } finally {
+      setDownloading(false);
+    }
+  };
+  ```
 
 ---
 
@@ -335,7 +344,29 @@ For automated social posting, the system creates a complete character file (for 
    ```
 
 4. **Deploy Smart Contracts:**  
-   Use Hardhat or Truffle to compile and deploy contracts located in `smart-contract/src/AIAgentFactory.sol`.
+   Use Foundry to compile and deploy contracts located in `smart-contract/src/AIAgentFactory.sol`.
+
+---
+
+## Tech Stack
+
+- **Foundry:**  
+  A smart contract development tool used for compiling, testing, and deploying Solidity contracts efficiently.
+
+- **Next.js:**  
+  A React framework that provides server-side rendering and static site generation for building fast, modern web applications.
+
+- **OpenAI:**  
+  Powers AI-driven text generation and interactive chat functionalities to create and manage dynamic character content.
+
+- **Civitai:**  
+  Utilized for generating high-quality images from text prompts, enhancing the visual aspect of character profiles.
+
+- **Pinata:**  
+  Enables decentralized storage by uploading images and other assets to IPFS, ensuring data permanence and reliability.
+
+- **ElizaOS:**  
+  Serves as the configuration and automation engine for character files, driving automated social account postings and interactions.
 
 ---
 
@@ -360,6 +391,10 @@ For automated social posting, the system creates a complete character file (for 
 
 - **Download Eliza’s Character File:**  
   Once created, download the JSON configuration file to integrate with automated social platforms.
+
+- **Deploy Eliza Starter:**  
+  Deploy the Eliza starter and run your character file for automated social accounts.  
+  [Eliza Docs Get Started](https://elizaos.github.io/eliza/docs/intro/#)
 
 ---
 
@@ -402,7 +437,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-*Happy Coding & Innovating!*  
+*Happy Coding & Innovating!*
 
 Feel free to open issues or reach out via our community channels for any questions or suggestions.
-
