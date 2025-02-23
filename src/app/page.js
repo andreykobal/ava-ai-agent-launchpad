@@ -9,7 +9,6 @@ import {
   ConnectButton,
 } from '@rainbow-me/rainbowkit';
 import { WagmiProvider, useWriteContract, useReadContract } from 'wagmi';
-import { baseSepolia } from 'wagmi/chains';
 import { http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
@@ -19,6 +18,25 @@ import { ImSpinner2 } from 'react-icons/im';
 import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { PinataSDK } from 'pinata-web3';
+
+// Add your custom chain configuration:
+const sonicBlazeTestnet = {
+  id: 57054,
+  name: 'Sonic Blaze Testnet',
+  network: 'sonic-blaze-testnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Sonic Blaze Token',
+    symbol: 'S',
+  },
+  rpcUrls: {
+    default: 'https://rpc.blaze.soniclabs.com',
+  },
+  blockExplorers: {
+    default: { name: 'SonicScan', url: 'https://testnet.sonicscan.org' },
+  },
+  testnet: true,
+};
 
 // ---------------------------------------------------------------------
 // Helper function: Upload image from a given URL to Pinata
@@ -129,7 +147,7 @@ const factoryABI = [
     "type": "event"
   }
 ];
-const FACTORY_ADDRESS = '0xb59388E73f08D71292e77e2c2aC2b84404bCf0F4';
+const FACTORY_ADDRESS = '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946';
 
 // ---------------------------------------------------------------------
 // RainbowKit & Query Client configuration
@@ -137,12 +155,13 @@ const FACTORY_ADDRESS = '0xb59388E73f08D71292e77e2c2aC2b84404bCf0F4';
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-  chains: [baseSepolia],
+  chains: [sonicBlazeTestnet],
   transports: {
-    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL),
+    [sonicBlazeTestnet.id]: http('https://rpc.blaze.soniclabs.com'),
   },
   ssr: true,
 });
+
 const queryClient = new QueryClient();
 
 // Create an instance of Civitai.
@@ -604,7 +623,7 @@ Fill in all fields using the token metadata and add creative details where appro
       });
       console.debug('handleCreate: Transaction hash:', txHash);
       const receipt = await waitForTransactionReceipt(config, {
-        chainId: baseSepolia.id,
+        chainId: sonicBlazeTestnet.id,
         hash: txHash,
         pollingInterval: 1000,
       });
