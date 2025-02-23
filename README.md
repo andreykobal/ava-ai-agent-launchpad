@@ -3,6 +3,8 @@
 
 > **Note:** This boilerplate serves as a starting point for developers to build and deploy their own AI agent launchpad.
 
+![Create-Next-App-02-21-2025_11_00_AM](https://github.com/user-attachments/assets/75a0930e-388e-4be0-8ed5-f9d3481c29b4)
+![Create-Next-App-02-21-2025_11_13_AM](https://github.com/user-attachments/assets/480e6c45-f713-49a2-9b02-717e402ff073)
 ---
 
 ## Table of Contents
@@ -35,8 +37,6 @@
 - **Automate Socials:** Produce detailed character files (e.g., for Eliza) to drive automated social posts on platforms like X (Twitter), Discord, Telegram, and more.
 
 ![ava launchpad drawio (1)](https://github.com/user-attachments/assets/f3ef8893-2fb7-4401-a71e-89eef929a733)
-![Create-Next-App-02-21-2025_11_00_AM](https://github.com/user-attachments/assets/75a0930e-388e-4be0-8ed5-f9d3481c29b4)
-![Create-Next-App-02-21-2025_11_13_AM](https://github.com/user-attachments/assets/480e6c45-f713-49a2-9b02-717e402ff073)
 
 ---
 
