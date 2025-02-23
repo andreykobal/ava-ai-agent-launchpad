@@ -6,7 +6,6 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Team Introduction](#team-introduction)
 - [Problem Statement](#problem-statement)
 - [Proposed Solution](#proposed-solution)
 - [Technical Approach & Architecture](#technical-approach--architecture)
@@ -31,19 +30,6 @@
 - **Tokenize Characters:** Deploy smart contracts that create an ERC20 token for each agent.
 - **Enable Live Chat:** Chat interactively with your AI agents.
 - **Automate Socials:** Produce detailed character files (e.g., for Eliza) to drive automated social posts on platforms like X (Twitter), Discord, and Telegram.
-
----
-
-## Team Introduction
-
-- **Your Name/Team Name** – *Lead Developer / Founder*  
-  Expert in full-stack development with a focus on AI and Web3 integrations.
-- **Collaborator Name** – *Smart Contract Engineer*  
-  Specialized in Solidity and blockchain-based tokenization.
-- **Collaborator Name** – *Frontend Developer*  
-  Experienced in React, Next.js, and decentralized application (dApp) design.
-
-*(Customize with your team details.)*
 
 ---
 

@@ -8,7 +8,7 @@ import "../src/AIAgentFactory.sol";
 
 contract InteractWithAIAgentFactory is Script {
     // Replace with your already deployed factory contract address.
-    address constant FACTORY_ADDRESS = 0x26af2afddf1903F8C8CDc0c1Cc8b7201a20a9209;
+    address constant FACTORY_ADDRESS = 0xb59388E73f08D71292e77e2c2aC2b84404bCf0F4;
 
     function run() external {
         vm.startBroadcast();
