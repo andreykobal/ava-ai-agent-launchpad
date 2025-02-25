@@ -11,13 +11,19 @@ import {
 import { WagmiProvider, useWriteContract, useReadContract } from 'wagmi';
 import { http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Civitai, Scheduler } from 'civitai';
 import { FaPaperPlane, FaHome } from 'react-icons/fa';
 import { ImSpinner2 } from 'react-icons/im';
 import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { PinataSDK } from 'pinata-web3';
+import { createClientUPProvider } from '@lukso/up-provider';
+
+
+const provider = createClientUPProvider();
+
+
 
 // Add your custom chain configuration:
 const sonicBlazeTestnet = {
@@ -229,6 +235,60 @@ function Home() {
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [downloading, setDownloading] = useState(false);
+
+
+  // UNIVERSAL PROFILE
+  // Track connected accounts
+  const [accounts, setAccounts] = useState([]);
+  const [contextAccounts, setContextAccounts] = useState([]);
+  const [profileConnected, setProfileConnected] = useState(false);
+
+  // Helper to check connection status
+  const updateConnected = useCallback(
+    (_accounts, _contextAccounts) => {
+      setProfileConnected(_accounts.length > 0 && _contextAccounts.length > 0);
+    },
+    []
+  );
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const _accounts = provider.accounts;
+        setAccounts(_accounts);
+
+        const _contextAccounts = provider.contextAccounts;
+        updateConnected(_accounts, _contextAccounts);
+      } catch (error) {
+        console.error('Failed to initialize provider:', error);
+      }
+    }
+
+    // Handle account changes
+    const accountsChanged = (_accounts) => {
+      setAccounts(_accounts);
+      updateConnected(_accounts, contextAccounts);
+    };
+
+    const contextAccountsChanged = (_accounts) => {
+      setContextAccounts(_accounts);
+      updateConnected(accounts, _accounts);
+    };
+
+    init();
+
+    // Set up event listeners
+    provider.on('accountsChanged', accountsChanged);
+    provider.on('contextAccountsChanged', contextAccountsChanged);
+
+    // Cleanup listeners
+    return () => {
+      provider.removeListener('accountsChanged', accountsChanged);
+      provider.removeListener('contextAccountsChanged', contextAccountsChanged);
+    };
+  }, [accounts[0], contextAccounts[0], updateConnected]);
+
+  
 
   // -------------------------------------------------------------------
   // Fetch existing AI agents from the contract with a dynamic scopeKey
