@@ -13,7 +13,7 @@
 - [Problem Statement](#problem-statement)
 - [Proposed Solution](#proposed-solution)
 - [Technical Approach & Architecture](#technical-approach--architecture)
-  - [1. AI-Driven Character Creation](#1-ai-driven-character-creation)
+  - [1. AI-Driven AI Agent Creation](#1-ai-driven-character-creation)
   - [2. Web3 Tokenization](#2-web3-tokenization)
   - [3. Live Chat with AI Agents](#3-live-chat-with-ai-agents)
   - [4. Creating Eliza’s Character File](#4-creating-elizas-character-file)
@@ -54,7 +54,7 @@ Existing solutions lack the integration between advanced AI character generation
 ## Proposed Solution
 
 AVA AI Agent Launchpad offers a holistic solution:
-- **AI-Driven Character Creation:** Leverages OpenAI and Civitai APIs to generate creative character profiles and media.
+- **AI-Driven AI Agent Creation:** Leverages OpenAI and Civitai APIs to generate creative character profiles and media.
 - **Blockchain Tokenization:** Uses smart contracts to deploy an ERC20 token per AI agent, ensuring secure on-chain identity.
 - **Interactive Chat Interface:** Enables real-time chatting with AI agents.
 - **Eliza Character File:** Automatically produces a JSON configuration file for social automation, ideal for platforms like X (Twitter) and more.
@@ -63,7 +63,7 @@ AVA AI Agent Launchpad offers a holistic solution:
 
 ## Technical Approach & Architecture
 
-### 1. AI-Driven Character Creation
+### 1. AI-Driven AI Agent Creation
 
 Each character begins with a series of AI-powered steps:
 
@@ -71,7 +71,7 @@ Each character begins with a series of AI-powered steps:
   Uses OpenAI’s GPT-4 to create a fictional character's name and description.
 
   ```javascript
-  // Character Creation: AI Writer for basic details
+  // AI Agent Creation: AI Writer for basic details
   const handleAIWriter = async () => {
     setLoading(true);
     try {
@@ -282,7 +282,7 @@ For automated social posting, the system creates a complete character file (for 
 
 ## Features
 
-- **AI-Driven Character Creation:**  
+- **AI-Driven AI Agent Creation:**  
   Use advanced AI to generate detailed character profiles in a multi-step process:
   - **Basic Details:** Name and description.
   - **Image Prompt & Generation:** Creative image prompts and dynamic image creation.
@@ -399,7 +399,7 @@ For automated social posting, the system creates a complete character file (for 
 ## Roadmap & Milestones
 
 - **Phase 1: MVP**
-  - Basic AI-driven character creation and chat interface.
+  - Basic AI-driven AI Agent Creation and chat interface.
   - Integration with Web3 wallet connections and testnet smart contract deployment.
 
 - **Phase 2: Enhanced Features**
