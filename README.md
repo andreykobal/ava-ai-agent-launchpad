@@ -40,6 +40,19 @@
 
 ---
 
+## Deployements
+
+- **Sonic Blaze Testnet**
+- [0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946](https://testnet.soniclabs.com/address/0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946)
+
+- **Core Testnet**
+- [0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946](https://scan.test.btcs.network/address/0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946)
+
+- **Lukso Testnet**
+- [0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946](https://explorer.execution.testnet.lukso.network/address/0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946)
+
+---
+
 ## Problem Statement
 
 Today’s digital communities often struggle with:
