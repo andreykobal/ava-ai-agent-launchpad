@@ -10,6 +10,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Deployments](#deployments)
 - [Problem Statement](#problem-statement)
 - [Proposed Solution](#proposed-solution)
 - [Technical Approach & Architecture](#technical-approach--architecture)
@@ -40,7 +41,7 @@
 
 ---
 
-## Deployements
+## Deployments
 
 - **Sonic Blaze Testnet**
 - [0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946](https://testnet.soniclabs.com/address/0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946)
