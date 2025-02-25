@@ -38,6 +38,42 @@ const sonicBlazeTestnet = {
   testnet: true,
 };
 
+const coreBlockchainTestnet = {
+  id: 1115,
+  name: 'Core Blockchain Testnet',
+  network: 'core-blockchain-testnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'tCORE',
+    symbol: 'tCORE',
+  },
+  rpcUrls: {
+    default: 'https://rpc.test.btcs.network',
+  },
+  blockExplorers: {
+    default: { name: 'CoreScan', url: 'https://scan.test.btcs.network' },
+  },
+  testnet: true,
+};
+
+const luksoTestnet = {
+  id: 4201,
+  name: 'LUKSO Testnet',
+  network: 'lukso-testnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'LYXt',
+    symbol: 'LYXt',
+  },
+  rpcUrls: {
+    default: 'https://rpc.testnet.lukso.network',
+  },
+  blockExplorers: {
+    default: { name: 'LUKSO Explorer', url: 'https://explorer.execution.testnet.lukso.network' },
+  },
+  testnet: true,
+};
+
 // ---------------------------------------------------------------------
 // Helper function: Upload image from a given URL to Pinata
 // ---------------------------------------------------------------------
@@ -155,9 +191,11 @@ const FACTORY_ADDRESS = '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946';
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-  chains: [sonicBlazeTestnet],
+  chains: [sonicBlazeTestnet, coreBlockchainTestnet, luksoTestnet],
   transports: {
     [sonicBlazeTestnet.id]: http('https://rpc.blaze.soniclabs.com'),
+    [coreBlockchainTestnet.id]: http('https://rpc.test.btcs.network'),
+    [luksoTestnet.id]: http('https://rpc.testnet.lukso.network'),
   },
   ssr: true,
 });
