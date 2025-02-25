@@ -21,7 +21,6 @@ import { PinataSDK } from 'pinata-web3';
 import { createClientUPProvider } from '@lukso/up-provider';
 
 
-const provider = createClientUPProvider();
 
 
 
@@ -239,11 +238,11 @@ function Home() {
 
   // UNIVERSAL PROFILE
   // Track connected accounts
+  const [provider, setProvider] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [contextAccounts, setContextAccounts] = useState([]);
   const [profileConnected, setProfileConnected] = useState(false);
 
-  // Helper to check connection status
   const updateConnected = useCallback(
     (_accounts, _contextAccounts) => {
       setProfileConnected(_accounts.length > 0 && _contextAccounts.length > 0);
@@ -251,7 +250,17 @@ function Home() {
     []
   );
 
+  // Create provider on client side
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setProvider(createClientUPProvider());
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only run if provider is available
+    if (!provider) return;
+
     async function init() {
       try {
         const _accounts = provider.accounts;
@@ -264,7 +273,6 @@ function Home() {
       }
     }
 
-    // Handle account changes
     const accountsChanged = (_accounts) => {
       setAccounts(_accounts);
       updateConnected(_accounts, contextAccounts);
@@ -281,14 +289,13 @@ function Home() {
     provider.on('accountsChanged', accountsChanged);
     provider.on('contextAccountsChanged', contextAccountsChanged);
 
-    // Cleanup listeners
+    // Cleanup listeners on unmount
     return () => {
       provider.removeListener('accountsChanged', accountsChanged);
       provider.removeListener('contextAccountsChanged', contextAccountsChanged);
     };
-  }, [accounts[0], contextAccounts[0], updateConnected]);
+  }, [provider, accounts[0], contextAccounts[0], updateConnected]);
 
-  
 
   // -------------------------------------------------------------------
   // Fetch existing AI agents from the contract with a dynamic scopeKey
