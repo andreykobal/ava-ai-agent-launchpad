@@ -236,65 +236,65 @@ function Home() {
   const [downloading, setDownloading] = useState(false);
 
 
-  // UNIVERSAL PROFILE
-  // Track connected accounts
-  const [provider, setProvider] = useState(null);
-  const [accounts, setAccounts] = useState([]);
-  const [contextAccounts, setContextAccounts] = useState([]);
-  const [profileConnected, setProfileConnected] = useState(false);
+  // // UNIVERSAL PROFILE
+  // // Track connected accounts
+  // const [provider, setProvider] = useState(null);
+  // const [accounts, setAccounts] = useState([]);
+  // const [contextAccounts, setContextAccounts] = useState([]);
+  // const [profileConnected, setProfileConnected] = useState(false);
 
-  const updateConnected = useCallback(
-    (_accounts, _contextAccounts) => {
-      setProfileConnected(_accounts.length > 0 && _contextAccounts.length > 0);
-    },
-    []
-  );
+  // const updateConnected = useCallback(
+  //   (_accounts, _contextAccounts) => {
+  //     setProfileConnected(_accounts.length > 0 && _contextAccounts.length > 0);
+  //   },
+  //   []
+  // );
 
-  // Create provider on client side
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setProvider(createClientUPProvider());
-    }
-  }, []);
+  // // Create provider on client side
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined') {
+  //     setProvider(createClientUPProvider());
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    // Only run if provider is available
-    if (!provider) return;
+  // useEffect(() => {
+  //   // Only run if provider is available
+  //   if (!provider) return;
 
-    async function init() {
-      try {
-        const _accounts = provider.accounts;
-        setAccounts(_accounts);
+  //   async function init() {
+  //     try {
+  //       const _accounts = provider.accounts;
+  //       setAccounts(_accounts);
 
-        const _contextAccounts = provider.contextAccounts;
-        updateConnected(_accounts, _contextAccounts);
-      } catch (error) {
-        console.error('Failed to initialize provider:', error);
-      }
-    }
+  //       const _contextAccounts = provider.contextAccounts;
+  //       updateConnected(_accounts, _contextAccounts);
+  //     } catch (error) {
+  //       console.error('Failed to initialize provider:', error);
+  //     }
+  //   }
 
-    const accountsChanged = (_accounts) => {
-      setAccounts(_accounts);
-      updateConnected(_accounts, contextAccounts);
-    };
+  //   const accountsChanged = (_accounts) => {
+  //     setAccounts(_accounts);
+  //     updateConnected(_accounts, contextAccounts);
+  //   };
 
-    const contextAccountsChanged = (_accounts) => {
-      setContextAccounts(_accounts);
-      updateConnected(accounts, _accounts);
-    };
+  //   const contextAccountsChanged = (_accounts) => {
+  //     setContextAccounts(_accounts);
+  //     updateConnected(accounts, _accounts);
+  //   };
 
-    init();
+  //   init();
 
-    // Set up event listeners
-    provider.on('accountsChanged', accountsChanged);
-    provider.on('contextAccountsChanged', contextAccountsChanged);
+  //   // Set up event listeners
+  //   provider.on('accountsChanged', accountsChanged);
+  //   provider.on('contextAccountsChanged', contextAccountsChanged);
 
-    // Cleanup listeners on unmount
-    return () => {
-      provider.removeListener('accountsChanged', accountsChanged);
-      provider.removeListener('contextAccountsChanged', contextAccountsChanged);
-    };
-  }, [provider, accounts[0], contextAccounts[0], updateConnected]);
+  //   // Cleanup listeners on unmount
+  //   return () => {
+  //     provider.removeListener('accountsChanged', accountsChanged);
+  //     provider.removeListener('contextAccountsChanged', contextAccountsChanged);
+  //   };
+  // }, [provider, accounts[0], contextAccounts[0], updateConnected]);
 
 
   // -------------------------------------------------------------------
