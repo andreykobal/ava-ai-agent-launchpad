@@ -18,7 +18,8 @@ import { ImSpinner2 } from 'react-icons/im';
 import { decodeEventLog } from 'viem';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { PinataSDK } from 'pinata-web3';
-import { createClientUPProvider } from '@lukso/up-provider';
+// import { createClientUPProvider } from '@lukso/up-provider';
+
 
 
 
@@ -78,6 +79,27 @@ const luksoTestnet = {
   },
   testnet: true,
 };
+
+const avalancheFuji = {
+  id: 43113,
+  name: 'Avalanche Fuji C-Chain',
+  network: 'avalanche-fuji',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Avalanche',
+    symbol: 'AVAX',
+  },
+  rpcUrls: {
+    default: 'https://api.avax-test.network/ext/bc/C/rpc',
+    websocket: 'wss://api.avax-test.network/ext/bc/C/ws',
+  },
+  blockExplorers: {
+    default: { name: 'Avalanche Fuji Explorer', url: 'https://subnets-test.avax.network/c-chain' },
+  },
+  testnet: true,
+};
+
+
 
 // ---------------------------------------------------------------------
 // Helper function: Upload image from a given URL to Pinata
@@ -196,14 +218,16 @@ const FACTORY_ADDRESS = '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946';
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-  chains: [sonicBlazeTestnet, coreBlockchainTestnet, luksoTestnet],
+  chains: [sonicBlazeTestnet, coreBlockchainTestnet, luksoTestnet, avalancheFuji],
   transports: {
     [sonicBlazeTestnet.id]: http('https://rpc.blaze.soniclabs.com'),
     [coreBlockchainTestnet.id]: http('https://rpc.test.btcs.network'),
     [luksoTestnet.id]: http('https://rpc.testnet.lukso.network'),
+    [avalancheFuji.id]: http('https://api.avax-test.network/ext/bc/C/rpc'),
   },
   ssr: true,
 });
+
 
 const queryClient = new QueryClient();
 

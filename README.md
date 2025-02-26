@@ -55,6 +55,8 @@
 - [0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946](https://explorer.execution.testnet.lukso.network/address/0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946)
 - [Mini App](https://universaleverything.io/0x9820128280e82671dbcE7A9fb299c50f9edFbFB5/?network=testnet)
 
+- **Avalanche Fuji C-Chain**
+- [0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946](https://subnets-test.avax.network/c-chain/address/0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946)
 ---
 
 ## Problem Statement
