@@ -3,7 +3,7 @@
 
 > **Note:** This boilerplate serves as a starting point for developers to build and deploy their own AI agent launchpad.
 
-# [👉 WATCH VIDEO DEMO 👈](https://www.youtube.com/watch?v=aiy_uOU_Go8&ab_channel=AndrewKobal)
+# [👉 WATCH DEMO VIDEO 👈](https://www.youtube.com/watch?v=aiy_uOU_Go8&ab_channel=AndrewKobal)
 
 ![Create-Next-App-02-21-2025_11_00_AM](https://github.com/user-attachments/assets/75a0930e-388e-4be0-8ed5-f9d3481c29b4)
 ![Create-Next-App-02-21-2025_11_13_AM](https://github.com/user-attachments/assets/480e6c45-f713-49a2-9b02-717e402ff073)
