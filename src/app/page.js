@@ -756,7 +756,17 @@ Fill in all fields using the token metadata and add creative details where appro
       console.debug('handleCreate: Deployed token address:', deployedTokenAddress);
       setTokenAddress(deployedTokenAddress);
       setSelectedTokenAddress(''); // Clear previous selection
-      setMessages([]);             // Clear old chat messages
+      setMessages([]);   
+      // Clear form fields and generated image
+      setName('');
+      setDescription('');
+      setImagePrompt('');
+      setGeneratedImage('');
+      setAge('');
+      setRace('');
+      setProfession('');
+      setBio('');
+      setFirstMessage('');
       setStep(4);
     } catch (error) {
       console.error('Error creating AI agent:', error);
