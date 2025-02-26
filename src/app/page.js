@@ -755,6 +755,8 @@ Fill in all fields using the token metadata and add creative details where appro
       }
       console.debug('handleCreate: Deployed token address:', deployedTokenAddress);
       setTokenAddress(deployedTokenAddress);
+      setSelectedTokenAddress(''); // Clear previous selection
+      setMessages([]);             // Clear old chat messages
       setStep(4);
     } catch (error) {
       console.error('Error creating AI agent:', error);
@@ -793,7 +795,8 @@ Image Prompt: ${imagePrompt}`,
       };
       setMessages([systemMessage, characterFirstMessage]);
     }
-  }, [step, agentData, imagePrompt]);
+  }, [step, agentData?.tokenAddress, imagePrompt]);
+
 
   useEffect(() => {
     const chatContainer = document.getElementById('chat-container');
@@ -856,6 +859,9 @@ Image Prompt: ${imagePrompt}`,
           <button
             onClick={() => {
               setStep(0);
+              setTokenAddress('');
+              setSelectedTokenAddress('');
+              setMessages([]);
               setRefreshCounter((prev) => prev + 1);
             }}
             className="flex items-center space-x-2 px-3 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
