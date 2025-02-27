@@ -8,7 +8,7 @@ import {
   RainbowKitProvider,
   ConnectButton,
 } from '@rainbow-me/rainbowkit';
-import { WagmiProvider, useWriteContract, useReadContract } from 'wagmi';
+import { WagmiProvider, useWriteContract, useReadContract, useAccount } from 'wagmi';
 import { http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
@@ -95,6 +95,24 @@ const avalancheFuji = {
   },
   blockExplorers: {
     default: { name: 'Avalanche Fuji Explorer', url: 'https://subnets-test.avax.network/c-chain' },
+  },
+  testnet: true,
+};
+
+const kaiaKairosTestnet = {
+  id: 1001,
+  name: 'Kaia Kairos Testnet',
+  network: 'kaia-kairos-testnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'KAIA',
+    symbol: 'KAIA',
+  },
+  rpcUrls: {
+    default: 'https://public-en-kairos.node.kaia.io',
+  },
+  blockExplorers: {
+    default: { name: 'Kaia Explorer', url: 'https://kairos.kaiascan.io' },
   },
   testnet: true,
 };
@@ -210,7 +228,6 @@ const factoryABI = [
     "type": "event"
   }
 ];
-const FACTORY_ADDRESS = '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946';
 
 // ---------------------------------------------------------------------
 // RainbowKit & Query Client configuration
@@ -218,12 +235,13 @@ const FACTORY_ADDRESS = '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946';
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-  chains: [sonicBlazeTestnet, coreBlockchainTestnet, luksoTestnet, avalancheFuji],
+  chains: [sonicBlazeTestnet, coreBlockchainTestnet, luksoTestnet, avalancheFuji, kaiaKairosTestnet],  // Add Kaia Kairos Testnet here
   transports: {
     [sonicBlazeTestnet.id]: http('https://rpc.blaze.soniclabs.com'),
     [coreBlockchainTestnet.id]: http('https://rpc.test.btcs.network'),
     [luksoTestnet.id]: http('https://rpc.testnet.lukso.network'),
     [avalancheFuji.id]: http('https://api.avax-test.network/ext/bc/C/rpc'),
+    [kaiaKairosTestnet.id]: http('https://public-en-kairos.node.kaia.io'),  // Add transport URL here
   },
   ssr: true,
 });
@@ -258,6 +276,13 @@ function Home() {
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [downloading, setDownloading] = useState(false);
+  
+  const { chain, status } = useAccount(); // Get connected chain and status
+
+  // Determine the correct contract address based on the connected chain
+  const FACTORY_ADDRESS = (chain?.network === 'kaia-kairos-testnet')
+    ? '0xbC6a338DcF849d389de5e9e38c14673310DD5B75'  // Kaia address
+    : '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946';  // Default address for other networks
 
 
   // // UNIVERSAL PROFILE
