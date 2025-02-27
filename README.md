@@ -57,6 +57,9 @@
 
 - **Avalanche Fuji C-Chain**
 - [0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946](https://subnets-test.avax.network/c-chain/address/0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946)
+
+- **Kaia Kairos Testnet**
+- [0xbC6a338DcF849d389de5e9e38c14673310DD5B75](https://kairos.kaiascan.io/address/0xbc6a338dcf849d389de5e9e38c14673310dd5b75?tabId=overview&page=1)
 ---
 
 ## Problem Statement
