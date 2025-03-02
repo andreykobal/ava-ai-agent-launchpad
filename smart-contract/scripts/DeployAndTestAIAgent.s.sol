@@ -5,18 +5,15 @@ import "forge-std/Script.sol";
 import "../src/AIAgentFactory.sol";
 
 contract DeployAndTestAIAgent is Script {
-    function run() external {
-        // Set custom gas limit
-        uint256 customGasLimit = 3_000_000; // Set the gas limit here
+            address constant FACTORY_ADDRESS = 0xbC6a338DcF849d389de5e9e38c14673310DD5B75;
 
+    function run() external {
         // Start broadcasting transactions.
         vm.startBroadcast();
 
-        // Deploy the contract with a custom gas limit
-        AIAgentFactory factory = new AIAgentFactory{gas: customGasLimit}();
+        // Deploy the AIAgentFactory.
+        AIAgentFactory factory = AIAgentFactory(FACTORY_ADDRESS);
         console.log("AIAgentFactory deployed at:", address(factory));
-
-
 
         // // Create Agent 0: Orin Thistledown.
         // address token0 = factory.createAIAgent(
