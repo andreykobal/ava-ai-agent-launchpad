@@ -8,7 +8,7 @@ import "../src/AIAgentFactory.sol";
 
 contract InteractWithAIAgentFactory is Script {
     // Replace with your already deployed factory contract address.
-    address constant FACTORY_ADDRESS = 0xbC6a338DcF849d389de5e9e38c14673310DD5B75;
+    address constant FACTORY_ADDRESS = 0xa4aae0C5C5B86A5d388d50377ccf0060A6bFbf1f;
 
     function run() external {
         vm.startBroadcast();
@@ -18,15 +18,15 @@ contract InteractWithAIAgentFactory is Script {
         console.log("Interacting with AIAgentFactory at:", FACTORY_ADDRESS);
 
         // // Create an AI agent with the provided parameters.
-        address tokenAddr = factory.createAIAgent(
-            "AI Bot",                    // name
-            25,                          // age
-            "Cyborg",                    // race
-            "Software Engineer",         // profession
-            "An AI that writes code",    // bio
-            "Hello, world!",             // firstMessage
-            "https://myethernity.mypinata.cloud/ipfs/bafkreibp5zztxbpfvkhfd4r7ntf57sgr3ieqx7fj3oigz2n3em4u75xv5q?pinataGatewayToken=_F-lMKYPVKRdRfyrP7Lyv_mUDjQGEm-bFc_BLdb3VtFdifoZp7Mruw5je8WgLMoR"  // image
-        );
+        // address tokenAddr = factory.createAIAgent(
+        //     "AI Bot",                    // name
+        //     25,                          // age
+        //     "Cyborg",                    // race
+        //     "Software Engineer",         // profession
+        //     "An AI that writes code",    // bio
+        //     "Hello, world!",             // firstMessage
+        //     "https://myethernity.mypinata.cloud/ipfs/bafkreibp5zztxbpfvkhfd4r7ntf57sgr3ieqx7fj3oigz2n3em4u75xv5q?pinataGatewayToken=_F-lMKYPVKRdRfyrP7Lyv_mUDjQGEm-bFc_BLdb3VtFdifoZp7Mruw5je8WgLMoR"  // image
+        // );
         // console.log("AI Agent Token deployed at:", tokenAddr);
 
         // Retrieve and log all AI agents.

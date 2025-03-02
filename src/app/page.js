@@ -117,6 +117,25 @@ const kaiaKairosTestnet = {
   testnet: true,
 };
 
+const auroraChain = {
+  id: 1313161644,
+  name: 'Aurora Public',
+  network: 'aurora-public',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Aurora',
+    symbol: 'AUR',
+  },
+  rpcUrls: {
+    default: 'https://0x4e4541ac.rpc.aurora-cloud.dev',
+  },
+  blockExplorers: {
+    default: { name: 'Aurora Explorer', url: 'https://0x4e4541ac.explorer.aurora-cloud.dev' },
+  },
+  testnet: false,
+};
+
+
 
 
 // ---------------------------------------------------------------------
@@ -235,13 +254,21 @@ const factoryABI = [
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-  chains: [sonicBlazeTestnet, coreBlockchainTestnet, luksoTestnet, avalancheFuji, kaiaKairosTestnet],  // Add Kaia Kairos Testnet here
+  chains: [
+    sonicBlazeTestnet,
+    coreBlockchainTestnet,
+    luksoTestnet,
+    avalancheFuji,
+    kaiaKairosTestnet,
+    auroraChain
+  ],
   transports: {
     [sonicBlazeTestnet.id]: http('https://rpc.blaze.soniclabs.com'),
     [coreBlockchainTestnet.id]: http('https://rpc.test.btcs.network'),
     [luksoTestnet.id]: http('https://rpc.testnet.lukso.network'),
     [avalancheFuji.id]: http('https://api.avax-test.network/ext/bc/C/rpc'),
-    [kaiaKairosTestnet.id]: http('https://public-en-kairos.node.kaia.io'),  // Add transport URL here
+    [kaiaKairosTestnet.id]: http('https://public-en-kairos.node.kaia.io'),
+    [auroraChain.id]: http('https://0x4e4541ac.rpc.aurora-cloud.dev'), // <-- Aurora transport added here
   },
   ssr: true,
 });
@@ -280,9 +307,12 @@ function Home() {
   const { chain, status } = useAccount(); // Get connected chain and status
 
   // Determine the correct contract address based on the connected chain
+  // Determine the correct contract address based on the connected chain
   const FACTORY_ADDRESS = (chain?.network === 'kaia-kairos-testnet')
     ? '0xbC6a338DcF849d389de5e9e38c14673310DD5B75'  // Kaia address
-    : '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946';  // Default address for other networks
+    : (chain?.network === 'aurora-public')
+      ? '0xa4aae0c5c5b86a5d388d50377ccf0060a6bfbf1f'  // Aurora address
+      : '0xB13624E8cC4Fb4Cd860c6D6c6F767776Ea497946'; // Default address for other networks
 
 
   // // UNIVERSAL PROFILE

@@ -60,6 +60,9 @@
 
 - **Kaia Kairos Testnet**
 - [0xbC6a338DcF849d389de5e9e38c14673310DD5B75](https://kairos.kaiascan.io/address/0xbc6a338dcf849d389de5e9e38c14673310dd5b75?tabId=overview&page=1)
+
+- **AVA Chain on Aurora**
+- [0xa4aae0C5C5B86A5d388d50377ccf0060A6bFbf1f](https://0x4e4541ac.explorer.aurora-cloud.dev/address/0xa4aae0C5C5B86A5d388d50377ccf0060A6bFbf1f)
 ---
 
 ## Problem Statement
